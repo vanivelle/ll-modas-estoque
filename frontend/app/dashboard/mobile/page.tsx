@@ -2,14 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { Home, ShoppingCart, Package, BarChart3, Plus, Minus, Barcode, X, Camera } from 'lucide-react';
-import { getProducts, addStock, removeStock } from '@/lib/api';
-
-interface Product {
-  id: string;
-  name: string;
-  quantity: number;
-  sku?: string;
-}
+import { getProducts, addStock, removeStock, type Product } from '@/lib/api';
 
 export default function MobileDashboard() {
   const [activeTab, setActiveTab] = useState<'home' | 'vender' | 'comprar' | 'estoque'>('home');

@@ -10,14 +10,7 @@ import {
   Barcode,
   Menu,
 } from 'lucide-react';
-import { getProducts, addStock, removeStock } from '@/lib/api';
-
-interface Product {
-  id: string;
-  name: string;
-  quantity: number;
-  sku?: string;
-}
+import { getProducts, addStock, removeStock, type Product } from '@/lib/api';
 
 export default function DesktopDashboard() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
