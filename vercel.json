@@ -1,10 +1,15 @@
 {
-  "buildCommand": "cd frontend && npm run build",
-  "installCommand": "cd frontend && npm install",
-  "devCommand": "cd frontend && npm run dev",
-  "framework": "nextjs",
-  "outputDirectory": "frontend/.next",
-  "env": {
-    "NEXT_PUBLIC_API_URL": "@ll-modas-api-url"
-  }
+  "builds": [
+    {
+      "src": "frontend/package.json",
+      "use": "@vercel/next"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "frontend/$1"
+    }
+  ]
 }
+
