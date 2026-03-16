@@ -1,5 +1,18 @@
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3002';
 
+export interface Product {
+  id: string;
+  name: string;
+  sku: string;
+  quantity: number;
+  minStock: number;
+  price: number;
+  unit: string;
+  category?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
 interface ApiResponse<T> {
   success: boolean;
   data?: T;
@@ -43,12 +56,12 @@ async function apiCall<T>(
 }
 
 // PRODUTOS
-export async function getProducts() {
-  return apiCall('/api/products', 'GET');
+export async function getProducts(): Promise<ApiResponse<Product[]>> {
+  return apiCall<Product[]>('/api/products', 'GET');
 }
 
-export async function getProduct(productId: string) {
-  return apiCall(`/api/products/${productId}`, 'GET');
+export async function getProduct(productId: string): Promise<ApiResponse<Product>> {
+  return apiCall<Product>(`/api/products/${productId}`, 'GET');
 }
 
 export async function createProduct(
@@ -59,15 +72,15 @@ export async function createProduct(
     price: number;
     minimum_quantity?: number;
   }
-) {
-  return apiCall('/api/products', 'POST', data);
+): Promise<ApiResponse<Product>> {
+  return apiCall<Product>('/api/products', 'POST', data);
 }
 
 export async function updateProduct(
   productId: string,
   data: any
-) {
-  return apiCall(`/api/products/${productId}`, 'PUT', data);
+): Promise<ApiResponse<Product>> {
+  return apiCall<Product>(`/api/products/${productId}`, 'PUT', data);
 }
 
 export async function deleteProduct(productId: string) {
