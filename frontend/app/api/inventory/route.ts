@@ -2,6 +2,15 @@ import { NextRequest, NextResponse } from 'next/server';
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3002';
 
+// Helper to safely parse JSON response
+async function parseResponse(response: Response) {
+  const contentType = response.headers.get('content-type');
+  if (contentType?.includes('application/json')) {
+    return await response.json();
+  }
+  return response.ok ? { success: true } : { error: await response.text() };
+}
+
 export async function GET(request: NextRequest) {
   try {
     const url = new URL(request.url);
@@ -18,7 +27,7 @@ export async function GET(request: NextRequest) {
       }
     );
 
-    const data = await response.json();
+    const data = await parseResponse(response);
     return NextResponse.json(data, { status: response.status });
   } catch (error) {
     console.error('Backend connection error:', error);
@@ -31,16 +40,22 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const url = new URL(request.url);
+    const endpoint = url.pathname.replace('/api/inventory', '');
     const body = await request.json();
-    const response = await fetch(`${BACKEND_URL}/api/inventory`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(body),
-    });
 
-    const data = await response.json();
+    const response = await fetch(
+      `${BACKEND_URL}/api/inventory${endpoint}`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(body),
+      }
+    );
+
+    const data = await parseResponse(response);
     return NextResponse.json(data, { status: response.status });
   } catch (error) {
     console.error('Backend connection error:', error);
@@ -65,7 +80,7 @@ export async function PUT(request: NextRequest) {
       body: JSON.stringify(body),
     });
 
-    const data = await response.json();
+    const data = await parseResponse(response);
     return NextResponse.json(data, { status: response.status });
   } catch (error) {
     console.error('Backend connection error:', error);
@@ -85,7 +100,7 @@ export async function DELETE(request: NextRequest) {
       method: 'DELETE',
     });
 
-    const data = response.ok ? { success: true } : await response.json();
+    const data = await parseResponse(response);
     return NextResponse.json(data, { status: response.status });
   } catch (error) {
     console.error('Backend connection error:', error);

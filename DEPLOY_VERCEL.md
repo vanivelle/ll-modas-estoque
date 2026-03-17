@@ -106,11 +106,13 @@ Start Command:         cd backend && node server.js
 Clique em **"Environment"** e adicione:
 
 ```
-SUPABASE_URL = https://xnqiicsiuyokexrwtrrg.supabase.co
-SUPABASE_ANON_KEY = sb_publishable_O00ynoOgW3_TMXBhx9VfMA_RDCQEL8r
+SUPABASE_URL = [Sua URL do Supabase]
+SUPABASE_ANON_KEY = [Sua chave anon do Supabase]
 PORT = 10000
 NODE_ENV = production
 ```
+
+⚠️ **NUNCA commite credenciais no Git!** Use variáveis de ambiente no Render.
 
 ⚠️ **Não deixe PORT vazio!** Render atribui dinamicamente em `onrender.com`
 
