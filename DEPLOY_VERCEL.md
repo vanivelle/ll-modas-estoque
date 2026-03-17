@@ -1,103 +1,202 @@
-# 🚀 DEPLOY NO VERCEL - PASSO A PASSO
+# 🚀 DEPLOY NO VERCEL - PASSO A PASSO (CORRIGIDO)
 
-## ✨ Status Atual
-- ✅ Repositório Git criado localmente
-- ✅ Todos os arquivos commitados
-- ⏭️ Próximo: GitHub + Vercel
-
----
-
-## 📋 PASSO 1: Criar Repositório no GitHub
-
-### 1.1 - Acesse GitHub
-- Vá para: https://github.com/new
-- Faça login (crie conta se não tiver)
-
-### 1.2 - Crie o repositório
-- **Repository name**: `ll-modas-estoque`
-- **Description**: Estoque Universal - Desktop & Mobile com Scanner USB
-- **Visibility**: Public (ou Private se preferir)
-- **NÃO** marque "Initialize with README"
-- Clique **"Create repository"**
-
-### 1.3 - Copie o código que aparecerá
-Será algo como:
-```bash
-git remote add origin https://github.com/SEU_USERNAME/ll-modas-estoque.git
-git branch -M main
-git push -u origin main
+## ✨ Arquitetura
+```
+┌─────────────────────────────────────────┐
+│   Vercel Frontend (Next.js)             │
+│   - Dashboard (Desktop & Mobile)        │
+│   - API Routes (/api/products, etc)     │
+└──────────────┬──────────────────────────┘
+               │✅ Chamadas API
+┌──────────────▼──────────────────────────┐
+│   Render.com Backend (Node.js/Express)  │
+│   - Port 3000 (API REST)                │
+└──────────────┬──────────────────────────┘
+               │ Query
+┌──────────────▼──────────────────────────┐
+│   Supabase Database (PostgreSQL)        │
+└─────────────────────────────────────────┘
 ```
 
 ---
 
-## 💻 PASSO 2: Conectar Repositório Local ao GitHub
+## 📋 PASSO 1: Preparar Repositório Local
 
-No PowerShell, execute os 3 comandos acima que você copiou:
-
-```powershell
+### 1.1 - Verificar arquivos críticos
+```bash
+# No PowerShell, na pasta do projeto:
 cd c:\Users\guigu\OneDrive\Documentos\web\ll-modas\estoque-universal
 
-git remote add origin https://github.com/SEU_USERNAME/ll-modas-estoque.git
-git branch -M main
-git push -u origin main
+# Verfique se os arquivos estão criados:
+cat backend\.env.local      # Deve ter SUPABASE_URL e SUPABASE_ANON_KEY
+cat frontend\.env.local     # Deve ter NEXT_PUBLIC_API_URL
+
+# Verificar se git está inicializado:
+git status
 ```
 
-**Será pedido seu GitHub username e password (ou token)**
+### 1.2 - Commit das mudanças
+```bash
+git add -A
+git commit -m "Fix: Corrigir rota products e configurar API proxy"
+git push origin main
+```
 
 ---
 
-## 🎯 PASSO 3: Deploy no Vercel (Frontend)
+## 🎯 PASSO 2: Deploy Frontend no Vercel
 
-### 3.1 - Acesse Vercel
+### 2.1 - Acesse Vercel
 - Vá para: https://vercel.com
-- Clique **"Sign Up"** e use sua conta GitHub (mais fácil)
+- Clique **"Sign Up"** se for primeira vez
+- Use sua conta GitHub
 
-### 3.2 - Crie novo projeto
-- Clique **"Add New Project"**
-- Procure pelo repositório "ll-modas-estoque"
+### 2.2 - Importe o repositório
+- Clique **"Add New..."** → **"Project"**
+- Procure pelo repositório (ex: `ll-modas-estoque`)
 - Clique **"Import"**
 
-### 3.3 - Configure Project Settings
-- **Framework Preset**: Next.js ✅
-- **Root Directory**: `frontend/` (IMPORTANTE!)
-- **Build Command**: `npm run build`
-- **Start Command**: `npm start`
-- **Environment Variables** - Adicione:
-  ```
-  NEXT_PUBLIC_API_URL=https://seu-backend-dominio.com
-  ```
-  (Por enquanto use: `http://localhost:3002` ou deixe em branco)
+### 2.3 - Configure o projeto
+Vercel pode detectar automaticamente o Next.js, mas certifique-se:
 
-### 3.4 - Deploy
+- **Framework**: Next.js ✅
+- **Root Directory**: `frontend/` ✅
+- **Build Command**: `npm run build` ✅
+- **Install Command**: `npm install` ✅
+
+### 2.4 - Adicione variáveis de ambiente
+Clique em **"Environment Variables"** e adicione:
+
+```
+NEXT_PUBLIC_API_URL = https://seu-backend-render.com
+```
+
+**Deixar em branco por enquanto** se ainda não tem backend deployado.
+
+### 2.5 - Deploy
 - Clique **"Deploy"**
-- Aguarde ~3 minutos
-- Pronto! URL gerada automaticamente
+- Aguarde ~5 minutos
+- Você receberá uma URL: `https://seu-projeto.vercel.app`
 
 ---
 
-## 🔧 PASSO 4: Deploy do Backend (Node/Express)
+## 🔧 PASSO 3: Deploy Backend no Render.com
 
-### Opção A: Render.com (Recomendado - Gratuito até 750h/mês)
-
-#### 4.1 - Acesse Render
+### 3.1 - Acesse Render
 - Vá para: https://render.com
-- Clique **"Sign Up"** e use GitHub
+- Clique **"Sign Up"** e use sua conta GitHub
+- Conecte seu GitHub
 
-#### 4.2 - Crie novo serviço
-- Clique **"New +"** → **"Web Service"**
+### 3.2 - Crie novo Web Service
+- Clique **"New"** → **"Web Service"**
 - Selecione seu repositório GitHub
-- Configure:
-  - **Name**: `ll-modas-api`
-  - **Environment**: `Node`
-  - **Build Command**: `cd backend && npm install`
-  - **Start Command**: `cd backend && npm start`
+- Clique **"Connect"**
 
-#### 4.3 - Adicione Variáveis de Ambiente
+### 3.3 - Configure o serviço
+Na tela de configuração, preencha:
+
 ```
-SUPABASE_URL=https://xnqiicsiuyokexrwtrrg.supabase.co
-SUPABASE_ANON_KEY=sb_publishable_O00ynoOgW3_TMXBhx9VfMA_RDCQEL8r
-PORT=3000
-NODE_ENV=production
+Name:                  ll-modas-api
+Environment:           Node
+Build Command:         cd backend && npm install
+Start Command:         cd backend && node server.js
+```
+
+### 3.4 - Adicione variáveis de ambiente
+Clique em **"Environment"** e adicione:
+
+```
+SUPABASE_URL = https://xnqiicsiuyokexrwtrrg.supabase.co
+SUPABASE_ANON_KEY = sb_publishable_O00ynoOgW3_TMXBhx9VfMA_RDCQEL8r
+PORT = 10000
+NODE_ENV = production
+```
+
+⚠️ **Não deixe PORT vazio!** Render atribui dinamicamente em `onrender.com`
+
+### 3.5 - Deploy
+- Clique **"Create Web Service"**
+- Render fará o deploy automaticamente
+- Você receberá uma URL: `https://seu-projeto.onrender.com`
+- ✅ A API estará em: `https://seu-projeto.onrender.com/api/products`
+
+---
+
+## 🔗 PASSO 4: Conectar Frontend ao Backend
+
+### 4.1 - Atualize a variável Vercel
+- Entre no Vercel → Seu projeto → **"Settings"** → **"Environment Variables"**
+- Edite `NEXT_PUBLIC_API_URL`:
+
+```
+NEXT_PUBLIC_API_URL = https://seu-projeto.onrender.com
+```
+
+### 4.2 - Redeploy frontend
+- Clique **"Deployments"** → Último deploy
+- Clique **"Redeploy"**
+
+### 4.3 - Teste no browser
+```
+1. Acesse: https://seu-projeto.vercel.app
+2. Abra Developer Tools (F12) → Console
+3. Faça uma ação (criar produto, etc)
+4. Verifique Network tab se está chamando:
+   https://seu-projeto.onrender.com/api/products
+```
+
+---
+
+## ✅ Checklist de Verificação
+
+- [ ] Repositório no GitHub com git push
+- [ ] Frontend deployado no Vercel
+- [ ] Backend deployado no Render.com
+- [ ] Variáveis ambiente configuradas em ambos
+- [ ] `NEXT_PUBLIC_API_URL` apontando para Render
+- [ ] API routes funcionando (`/api/products`, `/api/inventory`)
+- [ ] Teste criar produto no browser
+- [ ] Verificar console para erros
+
+---
+
+## 🐛 Troubleshooting
+
+### Erro 500 no Vercel
+```
+❌ Error: Erro conectando ao backend
+```
+**Solução:** Verificar se URL no NEXT_PUBLIC_API_URL está correta
+```bash
+# Testar via terminal:
+curl https://seu-projeto.onrender.com/health
+```
+
+### Backend não inicia
+```
+❌ ERRO: Variáveis SUPABASE_URL e SUPABASE_ANON_KEY não configuradas!
+```
+**Solução:** Adicionar variáveis em Render → Environment Variables
+
+### CORS error
+```
+❌ Access to XMLHttpRequest has been blocked by CORS policy
+```
+**Solução:** Backend já tem `cors()` habilitado, certificar que está rodando
+
+### Renderizar freezou no cold start
+```
+❌ Site lento na primeira requisição
+```
+**Solução:** Normal no Render gratuito, aguarde 30s para wake up
+
+---
+
+## 📞 Suporte
+
+- **Vercel Docs**: https://vercel.com/docs
+- **Render Docs**: https://render.com/docs
+- **Environment Variables**: https://render.com/docs/configure-environment-variables
 ```
 
 #### 4.4 - Deploy
