@@ -267,7 +267,7 @@ export default function DesktopDashboard() {
                       <option value="">Selecione um produto</option>
                       {products.map((p) => (
                         <option key={p.id} value={p.id}>
-                          {p.name}
+                          {p.name} - R$ {p.price.toFixed(2)}
                         </option>
                       ))}
                     </select>
@@ -324,7 +324,7 @@ export default function DesktopDashboard() {
                       <option value="">Selecione um produto</option>
                       {products.map((p) => (
                         <option key={p.id} value={p.id}>
-                          {p.name} ({p.quantity ?? 0})
+                          {p.name} - R$ {p.price.toFixed(2)} - Estoque: {p.quantity ?? 0}
                         </option>
                       ))}
                     </select>

@@ -330,7 +330,7 @@ export default function DashboardDesktop() {
                     <option value="">Selecione um produto...</option>
                     {products.map(p => (
                       <option key={p.id} value={p.id}>
-                        {p.name} - Estoque: {p.quantity ?? 0} (SKU: {p.sku})
+                        {p.name} - R$ {p.price.toFixed(2)} - Estoque: {p.quantity ?? 0}
                       </option>
                     ))}
                   </select>
@@ -395,7 +395,7 @@ export default function DashboardDesktop() {
                     <option value="">Selecione um produto...</option>
                     {products.map(p => (
                       <option key={p.id} value={p.id}>
-                        {p.name} - Estoque atual: {p.quantity ?? 0}
+                        {p.name} - R$ {p.price.toFixed(2)} - Estoque: {p.quantity ?? 0}
                       </option>
                     ))}
                   </select>
