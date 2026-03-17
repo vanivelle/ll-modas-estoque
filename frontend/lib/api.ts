@@ -73,11 +73,13 @@ export async function getProducts(): Promise<ApiResponse<Product[]>> {
 // Dados locais de backup
 function getLocalProducts(): Product[] {
   return [
-    { id: 'local-1', name: 'Camisa', sku: 'CAM001', barcode: '7998765432101', price: 49.90, minimum_quantity: 5, quantity: 10 },
-    { id: 'local-2', name: 'Calça', sku: 'CAL001', barcode: '7998765432102', price: 79.90, minimum_quantity: 3, quantity: 8 },
-    { id: 'local-3', name: 'Bermuda', sku: 'BER001', barcode: '7998765432103', price: 59.90, minimum_quantity: 4, quantity: 6 },
-    { id: 'local-4', name: 'Jaqueta', sku: 'JAC001', barcode: '7998765432104', price: 129.90, minimum_quantity: 2, quantity: 4 },
-    { id: 'local-5', name: 'Sotaque', sku: 'SOT001', barcode: '7998765432105', price: 34.90, minimum_quantity: 10, quantity: 15 },
+    { id: 'local-1', name: 'Relógio Analógico', sku: 'REL001', barcode: '7998765432101', price: 89.90, minimum_quantity: 3, quantity: 12 },
+    { id: 'local-2', name: 'Óculos de Sol UV', sku: 'OCU001', barcode: '7998765432102', price: 149.90, minimum_quantity: 5, quantity: 18 },
+    { id: 'local-3', name: 'Relógio Digital Led', sku: 'REL002', barcode: '7998765432103', price: 59.90, minimum_quantity: 4, quantity: 25 },
+    { id: 'local-4', name: 'Óculos Estilo Wayfarer', sku: 'OCU002', barcode: '7998765432104', price: 129.90, minimum_quantity: 3, quantity: 14 },
+    { id: 'local-5', name: 'Pulseira Relógio LED', sku: 'PUL001', barcode: '7998765432105', price: 45.90, minimum_quantity: 8, quantity: 32 },
+    { id: 'local-6', name: 'Corrente de Aço Inox', sku: 'COR001', barcode: '7998765432106', price: 79.90, minimum_quantity: 5, quantity: 20 },
+    { id: 'local-7', name: 'Anel Aço Inox', sku: 'ANE001', barcode: '7998765432107', price: 34.90, minimum_quantity: 10, quantity: 45 },
   ];
 }
 
