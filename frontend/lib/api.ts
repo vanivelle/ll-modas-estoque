@@ -60,6 +60,26 @@ export async function getProducts(): Promise<ApiResponse<Product[]>> {
   return apiCall<Product[]>('/api/products', 'GET');
 }
 
+// Seed para criar produtos de teste
+export async function seedProducts(): Promise<ApiResponse<Product[]>> {
+  const products = [
+    { name: 'Camisa', sku: 'CAM001', barcode: '7998765432101', price: 49.90, minimum_quantity: 5 },
+    { name: 'Calça', sku: 'CAL001', barcode: '7998765432102', price: 79.90, minimum_quantity: 3 },
+    { name: 'Bermuda', sku: 'BER001', barcode: '7998765432103', price: 59.90, minimum_quantity: 4 },
+    { name: 'Jaqueta', sku: 'JAC001', barcode: '7998765432104', price: 129.90, minimum_quantity: 2 },
+    { name: 'Sotaque', sku: 'SOT001', barcode: '7998765432105', price: 34.90, minimum_quantity: 10 },
+  ];
+
+  const results = await Promise.all(
+    products.map(p => createProduct(p))
+  );
+  
+  return {
+    success: true,
+    data: results.map(r => r.data).filter(Boolean) as Product[],
+  };
+}
+
 export async function getProduct(productId: string): Promise<ApiResponse<Product>> {
   return apiCall<Product>(`/api/products/${productId}`, 'GET');
 }

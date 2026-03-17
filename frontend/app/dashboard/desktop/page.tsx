@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   BarChart3,
   LogOut,
@@ -10,9 +11,10 @@ import {
   Barcode,
   Menu,
 } from 'lucide-react';
-import { getProducts, addStock, removeStock, type Product } from '@/lib/api';
+import { getProducts, addStock, removeStock, seedProducts, type Product } from '@/lib/api';
 
 export default function DesktopDashboard() {
+  const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [activeTab, setActiveTab] = useState<'dashboard' | 'saida' | 'entrada' | 'estoque' | 'relatorios'>('dashboard');
   const [products, setProducts] = useState<Product[]>([]);
@@ -32,10 +34,16 @@ export default function DesktopDashboard() {
   const loadProducts = async () => {
     try {
       const response = await getProducts();
-      if (response.success && response.data) {
+      if (response.success && response.data && response.data.length > 0) {
         setProducts(response.data);
       } else {
-        setProducts([]);
+        console.log('Nenhum produto encontrado, criando produtos de teste...');
+        const seedResult = await seedProducts();
+        if (seedResult.success && seedResult.data) {
+          setProducts(seedResult.data);
+        } else {
+          setProducts([]);
+        }
       }
     } catch (error) {
       console.error('Erro carregando produtos:', error);
@@ -140,7 +148,9 @@ export default function DesktopDashboard() {
 
         {/* Logout */}
         <div className="p-4 border-t border-slate-700">
-          <button className="w-full flex items-center space-x-3 p-3 rounded-lg text-red-400 hover:bg-red-900/20 transition">
+          <button 
+            onClick={() => router.push('/dashboard')}
+            className="w-full flex items-center space-x-3 p-3 rounded-lg text-red-400 hover:bg-red-900/20 transition">
             <LogOut size={20} />
             {sidebarOpen && <span>Sair</span>}
           </button>

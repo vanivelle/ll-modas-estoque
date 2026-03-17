@@ -1,10 +1,12 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { Home, ShoppingCart, Package, BarChart3, Plus, Minus, Barcode, X, Camera } from 'lucide-react';
-import { getProducts, addStock, removeStock, type Product } from '@/lib/api';
+import { getProducts, addStock, removeStock, seedProducts, type Product } from '@/lib/api';
 
 export default function MobileDashboard() {
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState<'home' | 'vender' | 'comprar' | 'estoque'>('home');
   const [products, setProducts] = useState<Product[]>([]);
   const [selectedProduct, setSelectedProduct] = useState<string>('');
@@ -33,10 +35,16 @@ export default function MobileDashboard() {
   const loadProducts = async () => {
     try {
       const response = await getProducts();
-      if (response.success && response.data) {
+      if (response.success && response.data && response.data.length > 0) {
         setProducts(response.data);
       } else {
-        setProducts([]);
+        console.log('Nenhum produto encontrado, criando produtos de teste...');
+        const seedResult = await seedProducts();
+        if (seedResult.success && seedResult.data) {
+          setProducts(seedResult.data);
+        } else {
+          setProducts([]);
+        }
       }
     } catch (error) {
       console.error('Erro carregando produtos:', error);

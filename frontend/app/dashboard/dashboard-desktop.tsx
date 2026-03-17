@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   BarChart3,
   Package,
@@ -14,11 +15,12 @@ import {
   Barcode,
   Menu,
 } from 'lucide-react';
-import { getProducts, addStock, removeStock, Product } from '@/lib/api';
+import { getProducts, addStock, removeStock, seedProducts, Product } from '@/lib/api';
 
 type MenuOption = 'dashboard' | 'entrada' | 'saida' | 'produtos' | 'estoque' | 'relatorios';
 
 export default function DashboardDesktop() {
+  const router = useRouter();
   const [products, setProducts] = useState<Product[]>([]);
   const [activeMenu, setActiveMenu] = useState<MenuOption>('dashboard');
   const [loading, setLoading] = useState(false);
@@ -38,8 +40,15 @@ export default function DashboardDesktop() {
   const loadProducts = async () => {
     setLoading(true);
     const result = await getProducts();
-    if (result.success) {
+    if (result.success && result.data && result.data.length > 0) {
       setProducts(result.data as Product[]);
+    } else {
+      // Se está vazio, cria produtos de teste
+      console.log('Nenhum produto encontrado, criando produtos de teste...');
+      const seedResult = await seedProducts();
+      if (seedResult.success && seedResult.data) {
+        setProducts(seedResult.data as Product[]);
+      }
     }
     setLoading(false);
   };
@@ -170,7 +179,9 @@ export default function DashboardDesktop() {
             <Settings size={20} />
             {sidebarOpen && <span className="text-sm">Configurações</span>}
           </button>
-          <button className="w-full flex items-center gap-3 px-4 py-3 text-gray-300 hover:bg-red-800/20 rounded-lg transition-all">
+          <button 
+            onClick={() => router.push('/dashboard')}
+            className="w-full flex items-center gap-3 px-4 py-3 text-gray-300 hover:bg-red-800/20 rounded-lg transition-all">
             <LogOut size={20} />
             {sidebarOpen && <span className="text-sm">Sair</span>}
           </button>
