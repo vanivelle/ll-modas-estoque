@@ -490,47 +490,111 @@ export default function DashboardDesktop() {
               <div className="bg-gradient-to-br from-slate-800/50 to-blue-800/20 border border-blue-500/20 rounded-xl p-6 backdrop-blur-sm">
                 <h2 className="text-2xl font-bold mb-6">Estoque Completo</h2>
                 
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="border-b border-blue-500/20">
-                        <th className="text-left py-4 px-4 text-blue-300 font-semibold">Produto</th>
-                        <th className="text-left py-4 px-4 text-blue-300 font-semibold">SKU</th>
-                        <th className="text-right py-4 px-4 text-blue-300 font-semibold">Estoque</th>
-                        <th className="text-right py-4 px-4 text-blue-300 font-semibold">Mínimo</th>
-                        <th className="text-right py-4 px-4 text-blue-300 font-semibold">Preço</th>
-                        <th className="text-center py-4 px-4 text-blue-300 font-semibold">Status</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {products.map(product => (
-                        <tr
-                          key={product.id}
-                          className={`border-b border-blue-500/10 hover:bg-blue-800/20 transition-colors ${
-                            (product.quantity ?? 0) <= product.minimum_quantity ? 'bg-yellow-900/10' : ''
-                          }`}
-                        >
-                          <td className="py-4 px-4 font-medium">{product.name}</td>
-                          <td className="py-4 px-4 text-gray-400">{product.sku}</td>
-                          <td className="py-4 px-4 text-right font-semibold">{product.quantity ?? 0}</td>
-                          <td className="py-4 px-4 text-right text-gray-400">{product.minimum_quantity}</td>
-                          <td className="py-4 px-4 text-right">R$ {product.price.toFixed(2)}</td>
-                          <td className="py-4 px-4 text-center">
-                            {(product.quantity ?? 0) > product.minimum_quantity ? (
-                              <span className="px-3 py-1 bg-emerald-500/20 text-emerald-300 rounded-full text-xs font-semibold">
-                                OK
-                              </span>
-                            ) : (
-                              <span className="px-3 py-1 bg-yellow-500/20 text-yellow-300 rounded-full text-xs font-semibold">
-                                BAIXO
-                              </span>
-                            )}
+                {products.length === 0 ? (
+                  <div className="text-center py-12">
+                    <Package className="mx-auto mb-4 text-gray-500" size={48} />
+                    <p className="text-gray-400 text-lg">Nenhum produto cadastrado ainda</p>
+                    <p className="text-gray-500 text-sm mt-2">Vá para "Compra (Entrada)" para adicionar produtos</p>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b border-blue-500/20">
+                          <th className="text-left py-4 px-4 text-blue-300 font-semibold">Produto</th>
+                          <th className="text-left py-4 px-4 text-blue-300 font-semibold">SKU</th>
+                          <th className="text-right py-4 px-4 text-blue-300 font-semibold">Estoque</th>
+                          <th className="text-right py-4 px-4 text-blue-300 font-semibold">Mínimo</th>
+                          <th className="text-right py-4 px-4 text-blue-300 font-semibold">Preço</th>
+                          <th className="text-center py-4 px-4 text-blue-300 font-semibold">Status</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {products.map(product => (
+                          <tr
+                            key={product.id}
+                            className={`border-b border-blue-500/10 hover:bg-blue-800/20 transition-colors ${
+                              (product.quantity ?? 0) <= product.minimum_quantity ? 'bg-yellow-900/10' : ''
+                            }`}
+                          >
+                            <td className="py-4 px-4 font-medium">{product.name}</td>
+                            <td className="py-4 px-4 text-gray-400">{product.sku}</td>
+                            <td className="py-4 px-4 text-right font-semibold">{product.quantity ?? 0}</td>
+                            <td className="py-4 px-4 text-right text-gray-400">{product.minimum_quantity}</td>
+                            <td className="py-4 px-4 text-right">R$ {product.price.toFixed(2)}</td>
+                            <td className="py-4 px-4 text-center">
+                              {(product.quantity ?? 0) > product.minimum_quantity ? (
+                                <span className="px-3 py-1 bg-emerald-500/20 text-emerald-300 rounded-full text-xs font-semibold">
+                                  OK
+                                </span>
+                              ) : (
+                                <span className="px-3 py-1 bg-yellow-500/20 text-yellow-300 rounded-full text-xs font-semibold">
+                                  BAIXO
+                                </span>
+                              )}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* RELATÓRIOS */}
+          {activeMenu === 'relatorios' && (
+            <div className="space-y-6">
+              <div className="bg-gradient-to-br from-slate-800/50 to-blue-800/20 border border-blue-500/20 rounded-xl p-6 backdrop-blur-sm">
+                <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
+                  <BarChart3 className="text-blue-400" />
+                  Relatório de Movimentações
+                </h2>
+
+                {/* Filtro de Busca */}
+                <div className="mb-6">
+                  <div className="flex gap-2">
+                    <div className="flex-1 relative">
+                      <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={20} />
+                      <input
+                        type="text"
+                        placeholder="Buscar por nome do produto..."
+                        className="w-full bg-slate-900/50 border border-blue-500/30 rounded-lg py-3 px-12 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/50"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Tabela de Movimentações */}
+                {products.length === 0 ? (
+                  <div className="text-center py-12">
+                    <BarChart3 className="mx-auto mb-4 text-gray-500" size={48} />
+                    <p className="text-gray-400 text-lg">Nenhuma movimentação registrada</p>
+                    <p className="text-gray-500 text-sm mt-2">Adicione produtos e registre entradas/saídas para ver o histórico</p>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b border-blue-500/20">
+                          <th className="text-left py-4 px-4 text-blue-300 font-semibold">Produto</th>
+                          <th className="text-center py-4 px-4 text-blue-300 font-semibold">Tipo</th>
+                          <th className="text-right py-4 px-4 text-blue-300 font-semibold">Quantidade</th>
+                          <th className="text-left py-4 px-4 text-blue-300 font-semibold">Observações</th>
+                          <th className="text-left py-4 px-4 text-blue-300 font-semibold">Data</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr className="border-b border-blue-500/10">
+                          <td colSpan={5} className="py-8 px-4 text-center text-gray-400">
+                            Histórico de movimentações aparecerá aqui
                           </td>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                      </tbody>
+                    </table>
+                  </div>
+                )}
               </div>
             </div>
           )}
