@@ -15,7 +15,7 @@ import {
   Barcode,
   Menu,
 } from 'lucide-react';
-import { getProducts, addStock, removeStock, seedProducts, Product } from '@/lib/api';
+import { getProducts, addStock, removeStock, seedProducts, Product, createProductWithStock } from '@/lib/api';
 
 type MenuOption = 'dashboard' | 'entrada' | 'saida' | 'produtos' | 'estoque' | 'relatorios';
 
@@ -29,6 +29,8 @@ export default function DashboardDesktop() {
   const [scanInput, setScanInput] = useState('');
   const [quantity, setQuantity] = useState('');
   const [notes, setNotes] = useState('');
+  const [productName, setProductName] = useState('');
+  const [productPrice, setProductPrice] = useState('');
 
   useEffect(() => {
     loadProducts();
@@ -103,6 +105,40 @@ export default function DashboardDesktop() {
       loadProducts();
       const input = document.getElementById('scanner-input') as HTMLInputElement;
       if (input) input.focus();
+    } else {
+      alert('❌ Erro: ' + result.error);
+    }
+    setLoading(false);
+  };
+
+  const handleAddProductWithStock = async () => {
+    if (!productName || !productPrice || !quantity) {
+      alert('Preencha: Nome do produto, Preço e Quantidade');
+      return;
+    }
+
+    const price = parseFloat(productPrice);
+    if (isNaN(price) || price <= 0) {
+      alert('Preço inválido');
+      return;
+    }
+
+    setLoading(true);
+    const result = await createProductWithStock({
+      name: productName,
+      price: price,
+      quantity: parseInt(quantity),
+      minimum_quantity: 1,
+      notes: notes,
+    });
+
+    if (result.success) {
+      alert('✅ Produto criado e estoque adicionado!');
+      setProductName('');
+      setProductPrice('');
+      setQuantity('');
+      setNotes('');
+      loadProducts();
     } else {
       alert('❌ Erro: ' + result.error);
     }
@@ -381,28 +417,35 @@ export default function DashboardDesktop() {
               <div className="bg-gradient-to-br from-slate-800/50 to-blue-800/20 border border-blue-500/20 rounded-xl p-8 backdrop-blur-sm">
                 <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
                   <Plus className="text-emerald-400" />
-                  Entrada de Estoque
+                  Nova Entrada de Produto
                 </h2>
 
-                {/* Produto */}
+                {/* Nome do Produto */}
                 <div className="mb-6">
-                  <label className="block text-sm font-semibold text-blue-300 mb-3">Produto</label>
-                  <select
-                    value={selectedProduct}
-                    onChange={(e) => setSelectedProduct(e.target.value)}
-                    className="w-full bg-slate-900/50 border border-blue-500/30 rounded-lg py-3 px-4 text-white focus:outline-none focus:ring-2 focus:ring-cyan-500/50"
-                  >
-                    <option value="">Selecione um produto...</option>
-                    {products.map(p => (
-                      <option key={p.id} value={p.id}>
-                        {p.name} - R$ {p.price.toFixed(2)} - Estoque: {p.quantity ?? 0}
-                      </option>
-                    ))}
-                  </select>
+                  <label className="block text-sm font-semibold text-blue-300 mb-3">Nome do Produto</label>
+                  <input
+                    type="text"
+                    value={productName}
+                    onChange={(e) => setProductName(e.target.value)}
+                    placeholder="Ex: Camisa Branca"
+                    className="w-full bg-slate-900/50 border border-blue-500/30 rounded-lg py-3 px-4 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/50"
+                  />
                 </div>
 
-                {/* Quantidade e Nota Fiscal */}
+                {/* Preço e Quantidade */}
                 <div className="grid grid-cols-2 gap-4 mb-6">
+                  <div>
+                    <label className="block text-sm font-semibold text-blue-300 mb-3">Preço (R$)</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={productPrice}
+                      onChange={(e) => setProductPrice(e.target.value)}
+                      placeholder="0.00"
+                      className="w-full bg-slate-900/50 border border-blue-500/30 rounded-lg py-3 px-4 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/50"
+                    />
+                  </div>
                   <div>
                     <label className="block text-sm font-semibold text-blue-300 mb-3">Quantidade</label>
                     <input
@@ -414,22 +457,24 @@ export default function DashboardDesktop() {
                       className="w-full bg-slate-900/50 border border-blue-500/30 rounded-lg py-3 px-4 text-white focus:outline-none focus:ring-2 focus:ring-cyan-500/50"
                     />
                   </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-blue-300 mb-3">Nota Fiscal</label>
-                    <input
-                      type="text"
-                      value={notes}
-                      onChange={(e) => setNotes(e.target.value)}
-                      placeholder="Ex: NF 123456"
-                      className="w-full bg-slate-900/50 border border-blue-500/30 rounded-lg py-3 px-4 text-white focus:outline-none focus:ring-2 focus:ring-cyan-500/50"
-                    />
-                  </div>
+                </div>
+
+                {/* Nota Fiscal */}
+                <div className="mb-6">
+                  <label className="block text-sm font-semibold text-blue-300 mb-3">Nota Fiscal / Observações</label>
+                  <input
+                    type="text"
+                    value={notes}
+                    onChange={(e) => setNotes(e.target.value)}
+                    placeholder="Ex: NF 123456"
+                    className="w-full bg-slate-900/50 border border-blue-500/30 rounded-lg py-3 px-4 text-white focus:outline-none focus:ring-2 focus:ring-cyan-500/50"
+                  />
                 </div>
 
                 {/* Botão */}
                 <button
-                  onClick={handleAddStock}
-                  disabled={loading || !selectedProduct || !quantity}
+                  onClick={handleAddProductWithStock}
+                  disabled={loading || !productName || !productPrice || !quantity}
                   className="w-full bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-500 hover:to-emerald-600 disabled:from-gray-600 disabled:to-gray-700 text-white font-bold py-4 rounded-lg transition-all duration-200 flex items-center justify-center gap-2"
                 >
                   <Plus size={20} />
