@@ -35,16 +35,10 @@ export default function MobileDashboard() {
   const loadProducts = async () => {
     try {
       const response = await getProducts();
-      if (response.success && response.data && response.data.length > 0) {
+      if (response.success && response.data) {
         setProducts(response.data);
       } else {
-        console.log('Nenhum produto encontrado, criando produtos de teste...');
-        const seedResult = await seedProducts();
-        if (seedResult.success && seedResult.data) {
-          setProducts(seedResult.data);
-        } else {
-          setProducts([]);
-        }
+        setProducts([]);
       }
     } catch (error) {
       console.error('Erro carregando produtos:', error);

@@ -40,15 +40,10 @@ export default function DashboardDesktop() {
   const loadProducts = async () => {
     setLoading(true);
     const result = await getProducts();
-    if (result.success && result.data && result.data.length > 0) {
+    if (result.success && result.data) {
       setProducts(result.data as Product[]);
     } else {
-      // Se está vazio, cria produtos de teste
-      console.log('Nenhum produto encontrado, criando produtos de teste...');
-      const seedResult = await seedProducts();
-      if (seedResult.success && seedResult.data) {
-        setProducts(seedResult.data as Product[]);
-      }
+      setProducts([]);
     }
     setLoading(false);
   };
