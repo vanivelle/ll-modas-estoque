@@ -125,9 +125,9 @@ export default function MobileDashboard() {
     }
   };
 
-  const lowStockProducts = products.filter(p => p.quantity < 5);
+  const lowStockProducts = products.filter(p => (p.quantity ?? 0) < 5);
   const totalProducts = products.length;
-  const totalQuantity = products.reduce((sum, p) => sum + p.quantity, 0);
+  const totalQuantity = products.reduce((sum, p) => sum + (p.quantity ?? 0), 0);
 
   return (
     <div className="h-screen bg-slate-900 flex flex-col">
@@ -156,7 +156,7 @@ export default function MobileDashboard() {
                 <p className="text-xs text-orange-100">Baixo Estoque</p>
               </div>
               <div className="bg-green-600 rounded-lg p-4 text-white text-center">
-                <p className="text-2xl font-bold">{Math.round((products.filter(p => p.quantity > 10).length / (totalProducts || 1)) * 100)}%</p>
+                <p className="text-2xl font-bold">{Math.round((products.filter(p => (p.quantity ?? 0) > 10).length / (totalProducts || 1)) * 100)}%</p>
                 <p className="text-xs text-green-100">Saudável</p>
               </div>
             </div>
@@ -260,8 +260,8 @@ export default function MobileDashboard() {
                 {products.slice(0, 5).map((p) => (
                   <div key={p.id} className="flex justify-between items-center p-2 bg-slate-700/50 rounded text-sm">
                     <span className="text-white">{p.name}</span>
-                    <span className={`font-semibold ${p.quantity < 5 ? 'text-red-400' : p.quantity < 10 ? 'text-yellow-400' : 'text-green-400'}`}>
-                      {p.quantity}
+                    <span className={`font-semibold ${(p.quantity ?? 0) < 5 ? 'text-red-400' : (p.quantity ?? 0) < 10 ? 'text-yellow-400' : 'text-green-400'}`}>
+                      {p.quantity ?? 0}
                     </span>
                   </div>
                 ))}
@@ -286,7 +286,7 @@ export default function MobileDashboard() {
                   <option value="">Selecione...</option>
                   {products.map((p) => (
                     <option key={p.id} value={p.id}>
-                      {p.name} ({p.quantity})
+                      {p.name} ({p.quantity ?? 0})
                     </option>
                   ))}
                 </select>
@@ -404,17 +404,17 @@ export default function MobileDashboard() {
                 <div key={p.id} className="bg-slate-800 rounded-lg p-3 border border-slate-700">
                   <div className="flex justify-between items-start mb-2">
                     <h3 className="text-sm font-semibold text-white flex-1">{p.name}</h3>
-                    <span className={`text-lg font-bold ${p.quantity < 5 ? 'text-red-400' : p.quantity < 10 ? 'text-yellow-400' : 'text-green-400'}`}>
-                      {p.quantity}
+                    <span className={`text-lg font-bold ${(p.quantity ?? 0) < 5 ? 'text-red-400' : (p.quantity ?? 0) < 10 ? 'text-yellow-400' : 'text-green-400'}`}>
+                      {p.quantity ?? 0}
                     </span>
                   </div>
                   {p.sku && <p className="text-xs text-gray-400">SKU: {p.sku}</p>}
                   <div className="mt-2 w-full bg-slate-700 rounded-full h-2">
                     <div
                       className={`h-2 rounded-full transition-all ${
-                        p.quantity < 5 ? 'bg-red-500' : p.quantity < 10 ? 'bg-yellow-500' : 'bg-green-500'
+                        (p.quantity ?? 0) < 5 ? 'bg-red-500' : (p.quantity ?? 0) < 10 ? 'bg-yellow-500' : 'bg-green-500'
                       }`}
-                      style={{ width: `${Math.min((p.quantity / 50) * 100, 100)}%` }}
+                      style={{ width: `${Math.min(((p.quantity ?? 0) / 50) * 100, 100)}%` }}
                     ></div>
                   </div>
                 </div>

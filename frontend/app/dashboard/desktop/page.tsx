@@ -83,10 +83,10 @@ export default function DesktopDashboard() {
     }
   };
 
-  const lowStockProducts = products.filter(p => p.quantity < 5);
+  const lowStockProducts = products.filter(p => (p.quantity ?? 0) < 5);
   const totalProducts = products.length;
-  const totalQuantity = products.reduce((sum, p) => sum + p.quantity, 0);
-  const healthPercentage = products.length > 0 ? Math.round((products.filter(p => p.quantity > 10).length / totalProducts) * 100) : 0;
+  const totalQuantity = products.reduce((sum, p) => sum + (p.quantity ?? 0), 0);
+  const healthPercentage = products.length > 0 ? Math.round((products.filter(p => (p.quantity ?? 0) > 10).length / totalProducts) * 100) : 0;
 
   const menuItems = [
     { id: 'dashboard' as const, label: 'Dashboard', icon: BarChart3 },
@@ -229,11 +229,11 @@ export default function DesktopDashboard() {
                       <tr key={product.id} className="border-b border-slate-700 hover:bg-slate-700/30">
                         <td className="px-4 py-3 text-white">{product.name}</td>
                         <td className="px-4 py-3 text-gray-400">{product.sku || '-'}</td>
-                        <td className="px-4 py-3 text-right font-semibold text-white">{product.quantity}</td>
+                        <td className="px-4 py-3 text-right font-semibold text-white">{product.quantity ?? 0}</td>
                         <td className="px-4 py-3 text-center">
-                          {product.quantity < 5 ? (
+                          {(product.quantity ?? 0) < 5 ? (
                             <span className="px-2 py-1 bg-red-900/30 text-red-300 rounded text-xs font-semibold">Crítico</span>
-                          ) : product.quantity < 10 ? (
+                          ) : (product.quantity ?? 0) < 10 ? (
                             <span className="px-2 py-1 bg-yellow-900/30 text-yellow-300 rounded text-xs font-semibold">Baixo</span>
                           ) : (
                             <span className="px-2 py-1 bg-green-900/30 text-green-300 rounded text-xs font-semibold">OK</span>
@@ -320,7 +320,7 @@ export default function DesktopDashboard() {
                       <option value="">Selecione um produto</option>
                       {products.map((p) => (
                         <option key={p.id} value={p.id}>
-                          {p.name} ({p.quantity})
+                          {p.name} ({p.quantity ?? 0})
                         </option>
                       ))}
                     </select>

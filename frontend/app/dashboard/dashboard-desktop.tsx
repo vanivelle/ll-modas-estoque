@@ -14,17 +14,7 @@ import {
   Barcode,
   Menu,
 } from 'lucide-react';
-import { getProducts, addStock, removeStock } from '@/lib/api';
-
-interface Product {
-  id: string;
-  name: string;
-  sku: string;
-  barcode: string;
-  price: number;
-  quantity: number;
-  minimum_quantity: number;
-}
+import { getProducts, addStock, removeStock, Product } from '@/lib/api';
 
 type MenuOption = 'dashboard' | 'entrada' | 'saida' | 'produtos' | 'estoque' | 'relatorios';
 
@@ -115,8 +105,8 @@ export default function DashboardDesktop() {
     setLoading(false);
   };
 
-  const lowStockProducts = products.filter(p => p.quantity <= p.minimum_quantity);
-  const totalQuantity = products.reduce((sum, p) => sum + p.quantity, 0);
+  const lowStockProducts = products.filter(p => (p.quantity ?? 0) <= p.minimum_quantity);
+  const totalQuantity = products.reduce((sum, p) => sum + (p.quantity ?? 0), 0);
 
   return (
     <div className="flex h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 text-white">
@@ -274,7 +264,7 @@ export default function DashboardDesktop() {
                       >
                         <p className="font-semibold">{product.name}</p>
                         <p className="text-yellow-300 text-sm">
-                          {product.quantity} un. (Mín: {product.minimum_quantity})
+                          {product.quantity ?? 0} un. (Mín: {product.minimum_quantity})
                         </p>
                       </div>
                     ))}
@@ -334,7 +324,7 @@ export default function DashboardDesktop() {
                     <option value="">Selecione um produto...</option>
                     {products.map(p => (
                       <option key={p.id} value={p.id}>
-                        {p.name} - Estoque: {p.quantity} (SKU: {p.sku})
+                        {p.name} - Estoque: {p.quantity ?? 0} (SKU: {p.sku})
                       </option>
                     ))}
                   </select>
@@ -399,7 +389,7 @@ export default function DashboardDesktop() {
                     <option value="">Selecione um produto...</option>
                     {products.map(p => (
                       <option key={p.id} value={p.id}>
-                        {p.name} - Estoque atual: {p.quantity}
+                        {p.name} - Estoque atual: {p.quantity ?? 0}
                       </option>
                     ))}
                   </select>
@@ -466,16 +456,16 @@ export default function DashboardDesktop() {
                         <tr
                           key={product.id}
                           className={`border-b border-blue-500/10 hover:bg-blue-800/20 transition-colors ${
-                            product.quantity <= product.minimum_quantity ? 'bg-yellow-900/10' : ''
+                            (product.quantity ?? 0) <= product.minimum_quantity ? 'bg-yellow-900/10' : ''
                           }`}
                         >
                           <td className="py-4 px-4 font-medium">{product.name}</td>
                           <td className="py-4 px-4 text-gray-400">{product.sku}</td>
-                          <td className="py-4 px-4 text-right font-semibold">{product.quantity}</td>
+                          <td className="py-4 px-4 text-right font-semibold">{product.quantity ?? 0}</td>
                           <td className="py-4 px-4 text-right text-gray-400">{product.minimum_quantity}</td>
                           <td className="py-4 px-4 text-right">R$ {product.price.toFixed(2)}</td>
                           <td className="py-4 px-4 text-center">
-                            {product.quantity > product.minimum_quantity ? (
+                            {(product.quantity ?? 0) > product.minimum_quantity ? (
                               <span className="px-3 py-1 bg-emerald-500/20 text-emerald-300 rounded-full text-xs font-semibold">
                                 OK
                               </span>

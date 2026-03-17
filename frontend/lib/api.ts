@@ -4,11 +4,11 @@ export interface Product {
   id: string;
   name: string;
   sku: string;
-  quantity: number;
-  minStock: number;
+  barcode: string;
   price: number;
-  unit: string;
-  category?: string;
+  minimum_quantity: number;
+  tenant_id?: string;
+  quantity?: number;
   created_at?: string;
   updated_at?: string;
 }
