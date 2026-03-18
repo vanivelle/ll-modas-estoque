@@ -117,10 +117,12 @@ export function EntradaForm() {
 
         {/* Produto Selecionado */}
         <div className="mb-6">
-          <label className="block text-sm font-semibold text-blue-300 mb-3">
+          <label htmlFor="product-select" className="block text-sm font-semibold text-blue-300 mb-3">
             Produto ({DROPDOWN_PRODUCTS.length} disponíveis)
           </label>
           <select
+            id="product-select"
+            name="product-select"
             value={selectedProduct}
             onChange={handleProductChange}
             className="w-full bg-slate-900/50 border border-blue-500/30 rounded-lg py-3 px-4 text-white focus:outline-none focus:ring-2 focus:ring-cyan-500/50"
@@ -139,8 +141,10 @@ export function EntradaForm() {
           <>
             {/* Nome do Produto */}
             <div className="mb-6">
-              <label className="block text-sm font-semibold text-blue-300 mb-3">Nome do Produto</label>
+              <label htmlFor="product-name" className="block text-sm font-semibold text-blue-300 mb-3">Nome do Produto</label>
               <input
+                id="product-name"
+                name="product-name"
                 type="text"
                 value={productName}
                 onChange={(e) => setProductName(e.target.value)}
@@ -152,8 +156,10 @@ export function EntradaForm() {
 
             {/* Código de Barras */}
             <div className="mb-6">
-              <label className="block text-sm font-semibold text-blue-300 mb-3">Código de Barras</label>
+              <label htmlFor="product-barcode" className="block text-sm font-semibold text-blue-300 mb-3">Código de Barras</label>
               <input
+                id="product-barcode"
+                name="product-barcode"
                 type="text"
                 value={productBarcode}
                 onChange={(e) => setProductBarcode(e.target.value)}
@@ -165,8 +171,10 @@ export function EntradaForm() {
             {/* Preço e Quantidade */}
             <div className="grid grid-cols-2 gap-4 mb-6">
               <div>
-                <label className="block text-sm font-semibold text-blue-300 mb-3">Preço (R$)</label>
+                <label htmlFor="product-price" className="block text-sm font-semibold text-blue-300 mb-3">Preço (R$)</label>
                 <input
+                  id="product-price"
+                  name="product-price"
                   type="number"
                   step="0.01"
                   min="0"
@@ -177,8 +185,10 @@ export function EntradaForm() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-semibold text-blue-300 mb-3">Quantidade</label>
+                <label htmlFor="product-quantity" className="block text-sm font-semibold text-blue-300 mb-3">Quantidade</label>
                 <input
+                  id="product-quantity"
+                  name="product-quantity"
                   type="number"
                   min="1"
                   value={quantity}
@@ -191,8 +201,10 @@ export function EntradaForm() {
 
             {/* Nota Fiscal */}
             <div className="mb-6">
-              <label className="block text-sm font-semibold text-blue-300 mb-3">Nota Fiscal</label>
+              <label htmlFor="product-notes" className="block text-sm font-semibold text-blue-300 mb-3">Nota Fiscal</label>
               <input
+                id="product-notes"
+                name="product-notes"
                 type="text"
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
