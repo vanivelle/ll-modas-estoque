@@ -55,7 +55,10 @@ export default function DashboardDesktop() {
   ]);
   const [productBarcode, setProductBarcode] = useState('');
 
+  console.log('🔍 DashboardDesktop renderizado - dropdownProducts:', dropdownProducts.length);
+
   useEffect(() => {
+    console.log('📍 useEffect: Carregando produtos...');
     loadProducts();
     // Focar no scanner quando carregar
     const input = document.getElementById('scanner-input') as HTMLInputElement;
@@ -446,10 +449,13 @@ export default function DashboardDesktop() {
 
                 {/* Produto Selecionado */}
                 <div className="mb-6">
-                  <label className="block text-sm font-semibold text-blue-300 mb-3">Produto</label>
+                  <label className="block text-sm font-semibold text-blue-300 mb-3">
+                    Produto ({dropdownProducts.length} disponíveis)
+                  </label>
                   <select
                     value={selectedProduct}
                     onChange={(e) => {
+                      console.log('Dropdown selecionado:', e.target.value);
                       setSelectedProduct(e.target.value);
                       if (e.target.value === 'new') {
                         setProductName('');
@@ -457,6 +463,7 @@ export default function DashboardDesktop() {
                         setProductPrice('');
                       } else {
                         const prod = dropdownProducts.find(p => p.id === e.target.value);
+                        console.log('Produto encontrado:', prod);
                         if (prod) {
                           setProductName(prod.name);
                           setProductBarcode(prod.barcode);
@@ -467,13 +474,21 @@ export default function DashboardDesktop() {
                     className="w-full bg-slate-900/50 border border-blue-500/30 rounded-lg py-3 px-4 text-white focus:outline-none focus:ring-2 focus:ring-cyan-500/50"
                   >
                     <option value="">Selecione um produto...</option>
-                    {dropdownProducts.map(p => (
-                      <option key={p.id} value={p.id}>
-                        {p.name}
-                      </option>
-                    ))}
+                    {dropdownProducts && dropdownProducts.length > 0 ? (
+                      dropdownProducts.map(p => {
+                        console.log('Renderizando opção:', p.name);
+                        return (
+                          <option key={p.id} value={p.id}>
+                            {p.name}
+                          </option>
+                        );
+                      })
+                    ) : (
+                      <option disabled>Nenhum produto disponível</option>
+                    )}
                     <option value="new">+ Novo Produto</option>
                   </select>
+                  <p className="text-xs text-gray-400 mt-1">Debug: {JSON.stringify(dropdownProducts.length)}</p>
                 </div>
 
                 {selectedProduct && (
