@@ -41,13 +41,11 @@ export const productsApi = {
     try {
       const { data, error } = await supabase
         .from('products')
-        .insert([product])
-        .select()
-        .single();
+        .insert([product]);
       
       if (error) throw error;
-      console.log('✅ Produto inserido:', data);
-      return data;
+      console.log('✅ Produto inserido com sucesso!');
+      return { id: '', ...product, created_at: new Date().toISOString() };
     } catch (error) {
       console.error('📛 Erro ao criar produto:', error);
       return null;
