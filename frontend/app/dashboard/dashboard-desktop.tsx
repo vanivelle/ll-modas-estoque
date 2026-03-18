@@ -31,11 +31,10 @@ export default function DashboardDesktop() {
   const [notes, setNotes] = useState('');
   const [productName, setProductName] = useState('');
   const [productPrice, setProductPrice] = useState('');
-  const [dropdownProducts, setDropdownProducts] = useState<Product[]>([]);
+  const [dropdownProducts, setDropdownProducts] = useState<Product[]>(getDropdownProducts());
 
   useEffect(() => {
     loadProducts();
-    setDropdownProducts(getDropdownProducts());
     // Focar no scanner quando carregar
     const input = document.getElementById('scanner-input') as HTMLInputElement;
     if (input) input.focus();
