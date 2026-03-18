@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   BarChart3,
@@ -12,11 +12,33 @@ import {
   Package,
 } from 'lucide-react';
 import { EntradaForm } from '../entrada-form';
+import { productsApi, type Product } from '@/lib/supabase';
 
 export default function DesktopDashboard() {
   const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [activeTab, setActiveTab] = useState<'dashboard' | 'saida' | 'entrada' | 'estoque' | 'relatorios'>('entrada');
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loadingProducts, setLoadingProducts] = useState(false);
+
+  // Carregar produtos do Supabase
+  useEffect(() => {
+    loadProducts();
+  }, []);
+
+  // Recarregar quando volta ao dashboard
+  useEffect(() => {
+    if (activeTab === 'dashboard') {
+      loadProducts();
+    }
+  }, [activeTab]);
+
+  const loadProducts = async () => {
+    setLoadingProducts(true);
+    const data = await productsApi.getAll();
+    setProducts(data);
+    setLoadingProducts(false);
+  };
 
   // Dados removidos - sem API localhost
 
@@ -88,12 +110,63 @@ export default function DesktopDashboard() {
           {activeTab === 'dashboard' && (
             <div>
               <h1 className="text-3xl font-bold text-white mb-8">Dashboard</h1>
-              <div className="bg-slate-800 rounded-lg p-8 border border-slate-700">
-                <div className="text-center py-12">
-                  <Package className="mx-auto mb-4 text-gray-500" size={48} />
-                  <p className="text-gray-400 text-lg">Dashboard em desenvolvimento</p>
-                  <p className="text-gray-500 text-sm mt-2">Vá para &quot;Entrada&quot; para adicionar produtos ao estoque</p>
+              
+              {/* Stats */}
+              <div className="grid grid-cols-4 gap-4 mb-8">
+                <div className="bg-gradient-to-br from-blue-600 to-blue-800 rounded-lg p-6 text-white">
+                  <p className="text-sm text-blue-100">Total de Produtos</p>
+                  <p className="text-4xl font-bold">{products.length}</p>
                 </div>
+                <div className="bg-gradient-to-br from-cyan-600 to-cyan-800 rounded-lg p-6 text-white">
+                  <p className="text-sm text-cyan-100">Quantidade Total</p>
+                  <p className="text-4xl font-bold">{products.reduce((sum, p) => sum + (p.quantity || 0), 0)}</p>
+                </div>
+                <div className="bg-gradient-to-br from-orange-600 to-orange-800 rounded-lg p-6 text-white">
+                  <p className="text-sm text-orange-100">Produtos Adicionados</p>
+                  <p className="text-4xl font-bold">{products.length}</p>
+                </div>
+                <div className="bg-gradient-to-br from-green-600 to-green-800 rounded-lg p-6 text-white">
+                  <p className="text-sm text-green-100">Status</p>
+                  <p className="text-2xl font-bold">✅ Online</p>
+                </div>
+              </div>
+
+              {/* Tabela */}
+              <div className="bg-slate-800 rounded-lg border border-slate-700 overflow-hidden">
+                <table className="w-full text-sm">
+                  <thead className="bg-slate-700 border-b border-slate-600">
+                    <tr>
+                      <th className="px-4 py-3 text-left text-gray-300">Produto</th>
+                      <th className="px-4 py-3 text-left text-gray-300">Código</th>
+                      <th className="px-4 py-3 text-right text-gray-300">Preço</th>
+                      <th className="px-4 py-3 text-right text-gray-300">Quantidade</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {loadingProducts ? (
+                      <tr>
+                        <td colSpan={4} className="px-4 py-8 text-center text-gray-400">
+                          ⏳ Carregando produtos...
+                        </td>
+                      </tr>
+                    ) : products.length === 0 ? (
+                      <tr>
+                        <td colSpan={4} className="px-4 py-8 text-center text-gray-400">
+                          Nenhum produto ainda. Adicione na aba &quot;Entrada&quot;
+                        </td>
+                      </tr>
+                    ) : (
+                      products.map((product) => (
+                        <tr key={product.id} className="border-b border-slate-700 hover:bg-slate-700/30">
+                          <td className="px-4 py-3 text-white">{product.name}</td>
+                          <td className="px-4 py-3 text-gray-400 font-mono text-xs">{product.barcode}</td>
+                          <td className="px-4 py-3 text-right text-white">R$ {(product.price || 0).toFixed(2)}</td>
+                          <td className="px-4 py-3 text-right font-semibold text-white">{product.quantity || 0} un</td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
               </div>
             </div>
           )}

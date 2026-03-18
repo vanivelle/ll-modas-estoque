@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { Plus } from 'lucide-react';
+import { productsApi } from '@/lib/supabase';
 
 const PRODUTOS = [
   { id: 'local-1', name: 'Camisa Social', barcode: '7998765432101' },
@@ -34,6 +35,7 @@ export function EntradaForm() {
   const [preco, setPreco] = useState('');
   const [quantidade, setQuantidade] = useState('');
   const [nota, setNota] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const val = e.target.value;
@@ -50,6 +52,41 @@ export function EntradaForm() {
         setBarcode(prod.barcode);
         setPreco(''); // SEMPRE vazio - usuário digita
       }
+    }
+  };
+
+  const handleConfirm = async () => {
+    if (!nome || !barcode || !preco || !quantidade) {
+      alert('⚠️ Preencha todos os campos!');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const result = await productsApi.create({
+        name: nome,
+        barcode: barcode,
+        price: parseFloat(preco),
+        quantity: parseInt(quantidade),
+      });
+
+      if (result) {
+        alert(`✅ ${nome} x ${quantidade} un adicionado ao estoque!`);
+        // Limpar campos
+        setSelectedId('');
+        setNome('');
+        setBarcode('');
+        setPreco('');
+        setQuantidade('');
+        setNota('');
+      } else {
+        alert('❌ Erro ao salvar no Supabase');
+      }
+    } catch (error) {
+      console.error('Erro:', error);
+      alert('❌ Erro ao conectar com banco de dados');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -163,12 +200,12 @@ export function EntradaForm() {
             </div>
 
             <button
-              onClick={() => alert(`✅ ${nome} x ${quantidade} un = R$ ${(parseFloat(preco) * parseInt(quantidade)).toFixed(2)}`)}
-              disabled={!selectedId || !nome || !preco || !quantidade}
+              onClick={handleConfirm}
+              disabled={!selectedId || !nome || !preco || !quantidade || loading}
               className="w-full bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-500 hover:to-emerald-600 disabled:from-gray-600 disabled:to-gray-700 text-white font-bold py-4 rounded-lg flex items-center justify-center gap-2 transition-all"
             >
               <Plus size={20} />
-              Confirmar Entrada
+              {loading ? '⏳ Salvando...' : '✅ Confirmar Entrada'}
             </button>
           </>
         )}
