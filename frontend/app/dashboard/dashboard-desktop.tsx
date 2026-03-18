@@ -15,7 +15,7 @@ import {
   Barcode,
   Menu,
 } from 'lucide-react';
-import { getProducts, addStock, removeStock, seedProducts, Product, createProductWithStock } from '@/lib/api';
+import { getProducts, addStock, removeStock, seedProducts, Product, createProductWithStock, getDropdownProducts } from '@/lib/api';
 
 type MenuOption = 'dashboard' | 'entrada' | 'saida' | 'produtos' | 'estoque' | 'relatorios';
 
@@ -31,9 +31,11 @@ export default function DashboardDesktop() {
   const [notes, setNotes] = useState('');
   const [productName, setProductName] = useState('');
   const [productPrice, setProductPrice] = useState('');
+  const [dropdownProducts, setDropdownProducts] = useState<Product[]>([]);
 
   useEffect(() => {
     loadProducts();
+    setDropdownProducts(getDropdownProducts());
     // Focar no scanner quando carregar
     const input = document.getElementById('scanner-input') as HTMLInputElement;
     if (input) input.focus();
@@ -90,8 +92,8 @@ export default function DashboardDesktop() {
   };
 
   const handleAddStock = async () => {
-    if (!selectedProduct || !quantity) {
-      alert('Selecione produto e quantidade');
+    if (!selectedProduct || !quantity || !productPrice) {
+      alert('Selecione produto, preço e quantidade');
       return;
     }
     setLoading(true);
@@ -101,6 +103,7 @@ export default function DashboardDesktop() {
       setSelectedProduct('');
       setQuantity('');
       setNotes('');
+      setProductPrice('');
       setScanInput('');
       loadProducts();
       const input = document.getElementById('scanner-input') as HTMLInputElement;
@@ -417,19 +420,24 @@ export default function DashboardDesktop() {
               <div className="bg-gradient-to-br from-slate-800/50 to-blue-800/20 border border-blue-500/20 rounded-xl p-8 backdrop-blur-sm">
                 <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
                   <Plus className="text-emerald-400" />
-                  Nova Entrada de Produto
+                  Entrada de Estoque
                 </h2>
 
-                {/* Nome do Produto */}
+                {/* Produto Selecionado */}
                 <div className="mb-6">
-                  <label className="block text-sm font-semibold text-blue-300 mb-3">Nome do Produto</label>
-                  <input
-                    type="text"
-                    value={productName}
-                    onChange={(e) => setProductName(e.target.value)}
-                    placeholder="Ex: Camisa Branca"
-                    className="w-full bg-slate-900/50 border border-blue-500/30 rounded-lg py-3 px-4 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/50"
-                  />
+                  <label className="block text-sm font-semibold text-blue-300 mb-3">Produto</label>
+                  <select
+                    value={selectedProduct}
+                    onChange={(e) => setSelectedProduct(e.target.value)}
+                    className="w-full bg-slate-900/50 border border-blue-500/30 rounded-lg py-3 px-4 text-white focus:outline-none focus:ring-2 focus:ring-cyan-500/50"
+                  >
+                    <option value="">Selecione um produto...</option>
+                    {dropdownProducts.map(p => (
+                      <option key={p.id} value={p.id}>
+                        {p.name}
+                      </option>
+                    ))}
+                  </select>
                 </div>
 
                 {/* Preço e Quantidade */}
@@ -461,7 +469,7 @@ export default function DashboardDesktop() {
 
                 {/* Nota Fiscal */}
                 <div className="mb-6">
-                  <label className="block text-sm font-semibold text-blue-300 mb-3">Nota Fiscal / Observações</label>
+                  <label className="block text-sm font-semibold text-blue-300 mb-3">Nota Fiscal</label>
                   <input
                     type="text"
                     value={notes}
@@ -473,8 +481,8 @@ export default function DashboardDesktop() {
 
                 {/* Botão */}
                 <button
-                  onClick={handleAddProductWithStock}
-                  disabled={loading || !productName || !productPrice || !quantity}
+                  onClick={handleAddStock}
+                  disabled={loading || !selectedProduct || !productPrice || !quantity}
                   className="w-full bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-500 hover:to-emerald-600 disabled:from-gray-600 disabled:to-gray-700 text-white font-bold py-4 rounded-lg transition-all duration-200 flex items-center justify-center gap-2"
                 >
                   <Plus size={20} />
