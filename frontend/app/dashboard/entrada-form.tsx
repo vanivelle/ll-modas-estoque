@@ -27,6 +27,7 @@ const PRODUTOS = [
 ];
 
 export function EntradaForm() {
+  console.log('🔵 ENTRADA-FORM LOADED - Produtos:', PRODUTOS.length);
   const [selectedId, setSelectedId] = useState('');
   const [nome, setNome] = useState('');
   const [barcode, setBarcode] = useState('');
