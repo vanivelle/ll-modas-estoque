@@ -32,7 +32,6 @@ export default function DashboardDesktop() {
   const [notes, setNotes] = useState('');
 
   useEffect(() => {
-    loadProducts();
     const input = document.getElementById('scanner-input') as HTMLInputElement;
     if (input) input.focus();
   }, []);
@@ -436,6 +435,8 @@ export default function DashboardDesktop() {
                     <div className="flex-1 relative">
                       <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={20} />
                       <input
+                        id="search-products"
+                        name="search-products"
                         type="text"
                         placeholder="Buscar por nome do produto..."
                         className="w-full bg-slate-900/50 border border-blue-500/30 rounded-lg py-3 px-12 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/50"
