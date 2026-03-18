@@ -275,13 +275,14 @@ export default function DashboardDesktop() {
 
                 {/* Scanner Input */}
                 <div className="mb-6">
-                  <label className="block text-sm font-semibold text-blue-300 mb-3">
+                  <label htmlFor="scanner-input" className="block text-sm font-semibold text-blue-300 mb-3">
                     Código de Barras (Scanner)
                   </label>
                   <div className="relative">
                     <Barcode className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={20} />
                     <input
                       id="scanner-input"
+                      name="scanner-input"
                       type="text"
                       value={scanInput}
                       onChange={(e) => setScanInput(e.target.value)}
@@ -299,8 +300,10 @@ export default function DashboardDesktop() {
 
                 {/* Produto Selecionado */}
                 <div className="mb-6">
-                  <label className="block text-sm font-semibold text-blue-300 mb-3">Produto</label>
+                  <label htmlFor="sale-product-select" className="block text-sm font-semibold text-blue-300 mb-3">Produto</label>
                   <select
+                    id="sale-product-select"
+                    name="sale-product-select"
                     value={selectedProduct}
                     onChange={(e) => setSelectedProduct(e.target.value)}
                     className="w-full bg-slate-900/50 border border-blue-500/30 rounded-lg py-3 px-4 text-white focus:outline-none focus:ring-2 focus:ring-cyan-500/50"
@@ -317,9 +320,10 @@ export default function DashboardDesktop() {
                 {/* Quantidade */}
                 <div className="grid grid-cols-2 gap-4 mb-6">
                   <div>
-                    <label className="block text-sm font-semibold text-blue-300 mb-3">Quantidade</label>
+                    <label htmlFor="sale-quantity-input" className="block text-sm font-semibold text-blue-300 mb-3">Quantidade</label>
                     <input
-                      id="quantity-input"
+                      id="sale-quantity-input"
+                      name="sale-quantity-input"
                       type="number"
                       min="1"
                       value={quantity}
@@ -329,8 +333,10 @@ export default function DashboardDesktop() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-semibold text-blue-300 mb-3">Observações</label>
+                    <label htmlFor="sale-notes" className="block text-sm font-semibold text-blue-300 mb-3">Observações</label>
                     <input
+                      id="sale-notes"
+                      name="sale-notes"
                       type="text"
                       value={notes}
                       onChange={(e) => setNotes(e.target.value)}
