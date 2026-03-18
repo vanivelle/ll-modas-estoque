@@ -58,7 +58,7 @@ export function EntradaForm() {
       <div className="bg-gradient-to-br from-slate-800/50 to-blue-800/20 border border-blue-500/20 rounded-xl p-8 backdrop-blur-sm">
         <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
           <Plus className="text-emerald-400" />
-          Entrada de Estoque
+          📦 ENTRADA ESTOQUE - 20 PRODUTOS CARREGADOS
         </h2>
 
         <div className="mb-6">
