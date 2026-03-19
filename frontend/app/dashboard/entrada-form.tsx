@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Plus, Camera } from 'lucide-react';
 import { productsApi } from '@/lib/supabase';
 import { BarcodeScanner } from './barcode-scanner';
+import { Comprovante } from './comprovante';
 
 const PRODUTOS = [
   { id: 'local-1', name: 'Camisa Social', barcode: '7998765432101' },
@@ -38,6 +39,13 @@ export function EntradaForm() {
   const [nota, setNota] = useState('');
   const [loading, setLoading] = useState(false);
   const [isScannerOpen, setIsScannerOpen] = useState(false);
+  const [isComprovanteOpen, setIsComprovanteOpen] = useState(false);
+  const [ultimoProduto, setUltimoProduto] = useState<{
+    nome: string;
+    barcode: string;
+    preco: number;
+    quantidade: number;
+  } | null>(null);
 
   const handleBarcodeDetected = (detectedCode: string) => {
     console.log('📱 Código detectado:', detectedCode);
@@ -111,6 +119,19 @@ export function EntradaForm() {
       });
 
       if (result) {
+        // Registrar produto para comprovante
+        setUltimoProduto({
+          nome,
+          barcode,
+          preco: parseFloat(preco),
+          quantidade: parseInt(quantidade),
+        });
+
+        // Mostrar comprovante
+        setTimeout(() => {
+          setIsComprovanteOpen(true);
+        }, 500);
+
         alert(`✅ ${nome} x ${quantidade} un adicionado ao estoque!`);
         // Limpar campos
         setSelectedId('');
@@ -137,6 +158,14 @@ export function EntradaForm() {
         onClose={() => setIsScannerOpen(false)}
         onDetected={handleBarcodeDetected}
       />
+
+      {ultimoProduto && (
+        <Comprovante
+          isOpen={isComprovanteOpen}
+          onClose={() => setIsComprovanteOpen(false)}
+          produto={ultimoProduto}
+        />
+      )}
 
       <div className="bg-gradient-to-br from-slate-800/50 to-blue-800/20 border border-blue-500/20 rounded-xl p-8 backdrop-blur-sm">
         <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
