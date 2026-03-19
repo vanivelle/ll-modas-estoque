@@ -4,11 +4,8 @@ import { createClient } from '@supabase/supabase-js';
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://lkftluxwzpzcgjvwvjol.supabase.co';
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxrZnRsdXh3enB6Y2dqdnd2am9sIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MTA3OTQzMjgsImV4cCI6MjAyNjM5NDMyOH0.8vkQk6R4-dK4QJqZ0pY8zN5xLmP9aB2kC8dL6eF7gHI';
 
-console.log('🔐 SUPABASE URL:', supabaseUrl);
-console.log('🔐 SUPABASE KEY:', supabaseAnonKey ? '✅ CONFIGURADA' : '❌ FALTANDO');
-
 if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error('❌ Supabase URL ou Anon Key não configuradas!');
+  throw new Error('❌ Supabase config error');
 }
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
