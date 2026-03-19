@@ -59,6 +59,24 @@ export function EntradaForm() {
     }
   };
 
+  const handleBarcodeInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const code = e.target.value.trim();
+    setBarcode(code);
+
+    // Auto-buscar quando o código tem tamanho comum (EAN-13 = 13, EAN-8 = 8, Code-128 varia)
+    if (code.length >= 8) {
+      const foundProduct = PRODUTOS.find(p => p.barcode === code);
+      
+      if (foundProduct) {
+        console.log('✅ Produto encontrado pelo código digitado:', foundProduct.name);
+        setSelectedId(foundProduct.id);
+        setNome(foundProduct.name);
+        setPreco(''); // Usuário digita o preço
+        // Não mostrar alert aqui - apenas auto-preenche silenciosamente
+      }
+    }
+  };
+
   const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const val = e.target.value;
     setSelectedId(val);
@@ -176,16 +194,20 @@ export function EntradaForm() {
 
             <div className="mb-6">
               <label htmlFor="inp-barcode" className="block text-sm font-semibold text-blue-300 mb-3">
-                Código de Barras
+                Código de Barras (Scanner ou Cole/Digite)
               </label>
               <input
                 id="inp-barcode"
                 name="inp-barcode"
                 type="text"
                 value={barcode}
-                onChange={(e) => setBarcode(e.target.value)}
-                className="w-full bg-slate-900/50 border border-blue-500/30 rounded-lg py-3 px-4 text-white"
+                onChange={handleBarcodeInput}
+                placeholder="📱 Cole/digite código ou use câmera →"
+                className="w-full bg-slate-900/50 border border-blue-500/30 rounded-lg py-3 px-4 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/50"
               />
+              {barcode && PRODUTOS.find(p => p.barcode === barcode) && (
+                <p className="text-xs text-emerald-400 mt-2">✅ Código reconhecido: {PRODUTOS.find(p => p.barcode === barcode)?.name}</p>
+              )}
             </div>
 
             <div className="grid grid-cols-2 gap-4 mb-6">
