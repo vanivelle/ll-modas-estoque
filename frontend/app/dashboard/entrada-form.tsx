@@ -1,8 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import { Plus } from 'lucide-react';
+import { Plus, Camera } from 'lucide-react';
 import { productsApi } from '@/lib/supabase';
+import { BarcodeScanner } from './barcode-scanner';
 
 const PRODUTOS = [
   { id: 'local-1', name: 'Camisa Social', barcode: '7998765432101' },
@@ -36,6 +37,27 @@ export function EntradaForm() {
   const [quantidade, setQuantidade] = useState('');
   const [nota, setNota] = useState('');
   const [loading, setLoading] = useState(false);
+  const [isScannerOpen, setIsScannerOpen] = useState(false);
+
+  const handleBarcodeDetected = (detectedCode: string) => {
+    console.log('📱 Código detectado:', detectedCode);
+    
+    // Procurar produto pelo código
+    const foundProduct = PRODUTOS.find(p => p.barcode === detectedCode);
+    
+    if (foundProduct) {
+      console.log('✅ Produto encontrado:', foundProduct.name);
+      setSelectedId(foundProduct.id);
+      setNome(foundProduct.name);
+      setBarcode(foundProduct.barcode);
+      setPreco(''); // Usuário digita o preço
+      setIsScannerOpen(false);
+      alert(`✅ Produto encontrado: ${foundProduct.name}`);
+    } else {
+      console.warn('❌ Produto não encontrado para código:', detectedCode);
+      alert(`❌ Produto com código ${detectedCode} não encontrado no catálogo!`);
+    }
+  };
 
   const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const val = e.target.value;
@@ -92,6 +114,12 @@ export function EntradaForm() {
 
   return (
     <div className="max-w-4xl space-y-6">
+      <BarcodeScanner 
+        isOpen={isScannerOpen}
+        onClose={() => setIsScannerOpen(false)}
+        onDetected={handleBarcodeDetected}
+      />
+
       <div className="bg-gradient-to-br from-slate-800/50 to-blue-800/20 border border-blue-500/20 rounded-xl p-8 backdrop-blur-sm">
         <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
           <Plus className="text-emerald-400" />
@@ -99,9 +127,19 @@ export function EntradaForm() {
         </h2>
 
         <div className="mb-6">
-          <label htmlFor="sel-produto" className="block text-sm font-semibold text-blue-300 mb-3">
-            Produto ({PRODUTOS.length} disponíveis)
-          </label>
+          <div className="flex items-center justify-between mb-3">
+            <label htmlFor="sel-produto" className="block text-sm font-semibold text-blue-300">
+              Produto ({PRODUTOS.length} disponíveis)
+            </label>
+            <button
+              onClick={() => setIsScannerOpen(true)}
+              className="flex items-center gap-2 bg-cyan-600/20 hover:bg-cyan-600/40 border border-cyan-500/50 text-cyan-300 px-3 py-1 rounded-lg text-sm font-semibold transition"
+              title="Abrir leitor de código de barras"
+            >
+              <Camera size={16} />
+              Escanear
+            </button>
+          </div>
           <select
             id="sel-produto"
             name="sel-produto"
