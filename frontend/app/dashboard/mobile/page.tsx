@@ -1,473 +1,239 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { Home, ShoppingCart, Package, BarChart3, Plus, Minus, Barcode, X, Camera } from 'lucide-react';
-import { getProducts, addStock, removeStock, seedProducts, type Product } from '@/lib/api';
+import { useState, useEffect } from 'react';
+import { Home, ShoppingCart, Package, BarChart3 } from 'lucide-react';
+import { supabase, type Product } from '@/lib/supabase';
 
 export default function MobileDashboard() {
-  const router = useRouter();
-  const [activeTab, setActiveTab] = useState<'home' | 'vender' | 'comprar' | 'estoque'>('home');
+  const [activeTab, setActiveTab] = useState<'home' | 'entrada' | 'saida' | 'estoque'>('home');
   const [products, setProducts] = useState<Product[]>([]);
-  const [selectedProduct, setSelectedProduct] = useState<string>('');
+  const [selectedProductId, setSelectedProductId] = useState('');
   const [quantity, setQuantity] = useState(1);
+  const [priceInput, setPriceInput] = useState('');
   const [notes, setNotes] = useState('');
-  const [showModal, setShowModal] = useState(false);
-  const [showCameraScanner, setShowCameraScanner] = useState(false);
-  const [cameraActive, setCameraActive] = useState(false);
-  const [scannedSku, setScannedSku] = useState('');
-  const scannerInputRef = useRef<HTMLInputElement>(null);
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const streamRef = useRef<MediaStream | null>(null);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     loadProducts();
-    
-    // Cleanup: parar câmera ao desmontar
-    return () => {
-      if (streamRef.current) {
-        streamRef.current.getTracks().forEach(track => track.stop());
-      }
-    };
   }, []);
 
   const loadProducts = async () => {
     try {
-      const response = await getProducts();
-      if (response.success && response.data) {
-        setProducts(response.data);
-      } else {
-        setProducts([]);
-      }
+      const { data, error } = await supabase
+        .from('products')
+        .select('*')
+        .order('name');
+        
+      if (error) throw error;
+      setProducts(data || []);
     } catch (error) {
       console.error('Erro carregando produtos:', error);
-      setProducts([]);
     }
   };
 
-  // Iniciar câmera
-  const startCamera = async () => {
+  const handleEntrada = async () => {
+    if (!selectedProductId || !quantity || !priceInput) {
+      alert('Preencha todos os campos');
+      return;
+    }
+
+    setLoading(true);
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'environment' }, // Câmera traseira em mobile
-      });
-      
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        streamRef.current = stream;
-        setCameraActive(true);
-      }
-    } catch (error) {
-      alert('Erro ao acessar a câmera. Verifique as permissões.');
-      console.error('Camera error:', error);
-    }
-  };
+      const product = products.find(p => p.id === selectedProductId);
+      if (!product) return;
 
-  // Parar câmera
-  const stopCamera = () => {
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach(track => track.stop());
-      setCameraActive(false);
-    }
-  };
+      await supabase.from('inventory_movements').insert([{
+        product_id: selectedProductId,
+        movement_type: 'entrada',
+        quantity: quantity,
+        notes: notes,
+        created_at: new Date().toISOString()
+      }]);
 
-  // Capturar foto e processar
-  const captureAndScan = async () => {
-    if (!videoRef.current || !canvasRef.current) return;
+      const newQty = (product.quantity || 0) + quantity;
+      await supabase
+        .from('products')
+        .update({ quantity: newQty, price: parseFloat(priceInput) })
+        .eq('id', selectedProductId);
 
-    const context = canvasRef.current.getContext('2d');
-    if (!context) return;
-
-    // Desenhar vídeo no canvas
-    context.drawImage(videoRef.current, 0, 0, canvasRef.current.width, canvasRef.current.height);
-
-    // Simular leitura de código (em produção, usar biblioteca de QR/Barcode)
-    // Por enquanto, mostrar feedback visual
-    alert('Câmera ativada! Em produção, você pode integrar uma biblioteca de leitura de código de barras.\nAtualmente use o scanner USB ou digite o SKU manualmente.');
-  };
-
-  const handleScannerInput = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
-      const sku = (e.target as HTMLInputElement).value;
-      const product = products.find(p => p.sku === sku);
-      if (product) {
-        setSelectedProduct(product.id);
-        (e.target as HTMLInputElement).value = '';
-      }
-      (e.target as HTMLInputElement).focus();
-    }
-  };
-
-  const handleAddStock = async () => {
-    if (!selectedProduct) return;
-    try {
-      await addStock(selectedProduct, quantity, notes);
+      alert('✅ Entrada registrada!');
+      setSelectedProductId('');
+      setQuantity(1);
+      setPriceInput('');
+      setNotes('');
       loadProducts();
+    } catch (error) {
+      alert('❌ Erro ao registrar entrada');
+      console.error(error);
+    }
+    setLoading(false);
+  };
+
+  const handleSaida = async () => {
+    if (!selectedProductId || !quantity) {
+      alert('Preencha todos os campos');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const product = products.find(p => p.id === selectedProductId);
+      if (!product) return;
+
+      if ((product.quantity || 0) < quantity) {
+        alert('❌ Quantidade insuficiente em estoque');
+        setLoading(false);
+        return;
+      }
+
+      await supabase.from('inventory_movements').insert([{
+        product_id: selectedProductId,
+        movement_type: 'saida',
+        quantity: quantity,
+        notes: notes,
+        created_at: new Date().toISOString()
+      }]);
+
+      const newQty = (product.quantity || 0) - quantity;
+      await supabase
+        .from('products')
+        .update({ quantity: newQty })
+        .eq('id', selectedProductId);
+
+      alert('✅ Saída registrada!');
+      setSelectedProductId('');
       setQuantity(1);
       setNotes('');
-      setSelectedProduct('');
-      setShowModal(false);
-    } catch (error) {
-      console.error('Erro ao adicionar estoque:', error);
-    }
-  };
-
-  const handleRemoveStock = async () => {
-    if (!selectedProduct) return;
-    try {
-      await removeStock(selectedProduct, quantity, notes);
       loadProducts();
-      setQuantity(1);
-      setNotes('');
-      setSelectedProduct('');
-      setShowModal(false);
     } catch (error) {
-      console.error('Erro ao remover estoque:', error);
+      alert('❌ Erro ao registrar saída');
+      console.error(error);
     }
+    setLoading(false);
   };
 
-  const lowStockProducts = products.filter(p => (p.quantity ?? 0) < 5);
-  const totalProducts = products.length;
-  const totalQuantity = products.reduce((sum, p) => sum + (p.quantity ?? 0), 0);
+  const totalQty = products.reduce((sum, p) => sum + (p.quantity || 0), 0);
+  const lowStock = products.filter(p => (p.quantity || 0) < 5).length;
+  const selectedProduct = products.find(p => p.id === selectedProductId);
 
   return (
-    <div className="h-screen bg-slate-900 flex flex-col">
-      {/* Main Content */}
-      <div className="flex-1 overflow-auto pb-20">
-        {/* Home Tab */}
+    <div className="min-h-screen bg-gradient-to-b from-slate-900 via-blue-900 to-slate-900 text-white">
+      <header className="sticky top-0 bg-gradient-to-r from-slate-800/90 to-blue-800/90 backdrop-blur p-4 border-b border-blue-700/30 z-40">
+        <h1 className="text-xl font-bold bg-gradient-to-r from-blue-300 to-cyan-300 bg-clip-text text-transparent">LL MODAS</h1>
+        <p className="text-xs text-gray-400">Estoque Móvel</p>
+      </header>
+
+      <main className="p-4 pb-24">
         {activeTab === 'home' && (
-          <div className="p-4 space-y-4">
-            <div className="bg-gradient-to-r from-blue-600 to-cyan-600 rounded-lg p-6 text-white">
-              <h1 className="text-2xl font-bold mb-2">LL MODAS</h1>
-              <p className="text-sm text-blue-100">Controle de Estoque</p>
-            </div>
-
-            {/* Stats Grid */}
+          <div className="space-y-4">
             <div className="grid grid-cols-2 gap-3">
-              <div className="bg-blue-600 rounded-lg p-4 text-white text-center">
-                <p className="text-2xl font-bold">{totalProducts}</p>
-                <p className="text-xs text-blue-100">Produtos</p>
+              <div className="bg-gradient-to-br from-blue-600/40 to-blue-800/40 border border-blue-500/30 rounded-lg p-4">
+                <Package className="text-blue-400 mb-2" size={20} />
+                <p className="text-xs text-blue-300">Produtos</p>
+                <p className="text-2xl font-bold">{products.length}</p>
               </div>
-              <div className="bg-cyan-600 rounded-lg p-4 text-white text-center">
-                <p className="text-2xl font-bold">{totalQuantity}</p>
-                <p className="text-xs text-cyan-100">Quantidade</p>
+              <div className="bg-gradient-to-br from-cyan-600/40 to-cyan-800/40 border border-cyan-500/30 rounded-lg p-4">
+                <BarChart3 className="text-cyan-400 mb-2" size={20} />
+                <p className="text-xs text-cyan-300">Total Qtd</p>
+                <p className="text-2xl font-bold">{totalQty}</p>
               </div>
-              <div className="bg-orange-600 rounded-lg p-4 text-white text-center">
-                <p className="text-2xl font-bold">{lowStockProducts.length}</p>
-                <p className="text-xs text-orange-100">Baixo Estoque</p>
+              <div className="bg-gradient-to-br from-yellow-600/40 to-yellow-800/40 border border-yellow-500/30 rounded-lg p-4">
+                <ShoppingCart className="text-yellow-400 mb-2" size={20} />
+                <p className="text-xs text-yellow-300">Baixo Est.</p>
+                <p className="text-2xl font-bold">{lowStock}</p>
               </div>
-              <div className="bg-green-600 rounded-lg p-4 text-white text-center">
-                <p className="text-2xl font-bold">{Math.round((products.filter(p => (p.quantity ?? 0) > 10).length / (totalProducts || 1)) * 100)}%</p>
-                <p className="text-xs text-green-100">Saudável</p>
+              <div className="bg-gradient-to-br from-green-600/40 to-green-800/40 border border-green-500/30 rounded-lg p-4">
+                <Home className="text-green-400 mb-2" size={20} />
+                <p className="text-xs text-green-300">Status</p>
+                <p className="text-2xl font-bold">✅</p>
               </div>
             </div>
-
-            {/* Scanner Input */}
-            <div className="bg-slate-800 rounded-lg p-4 border border-slate-700">
-              <div className="flex items-center justify-between mb-4">
-                <label className="flex items-center text-xs font-semibold text-gray-300">
-                  <Barcode className="mr-2" size={16} />
-                  Scanner USB
-                </label>
-                <span className="text-xs px-2 py-1 bg-green-900/30 text-green-300 rounded font-semibold">
-                  🟢 Ativo
-                </span>
-              </div>
-              
-              {/* Hidden Input - Always listening for scanner input */}
-              <input
-                ref={scannerInputRef}
-                type="text"
-                onKeyDown={handleScannerInput}
-                autoFocus
-                className="absolute -left-96 opacity-0"
-                style={{ position: 'absolute', left: '-9999px' }}
-              />
-              
-              {/* Visual Feedback - Scanner is ready */}
-              <div className="bg-slate-700/50 border border-dashed border-green-500/50 rounded-lg p-4 text-center mb-3">
-                <p className="text-sm text-gray-300 mb-2">
-                  📱 Scanner pronto para leitura
-                </p>
-                <p className="text-xs text-gray-400">
-                  Aponte o scanner para um código de barras
-                </p>
-              </div>
-              
-              {/* Botão de Câmera */}
-              <button
-                onClick={() => setShowCameraScanner(!showCameraScanner)}
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded flex items-center justify-center gap-2"
-              >
-                <Camera size={16} />
-                {showCameraScanner ? 'Fechar Câmera' : 'Usar Câmera'}
-              </button>
+            <div className="bg-slate-800/50 border border-blue-600/30 rounded-lg p-4 mt-6">
+              <p className="text-sm text-blue-200">📱 Use os botões abaixo para:</p>
+              <p className="text-xs text-gray-400 mt-2">✅ Entrada - Receber mercadoria</p>
+              <p className="text-xs text-gray-400">🛒 Saída - Vender produtos</p>
+              <p className="text-xs text-gray-400">📦 Estoque - Consultar</p>
             </div>
+          </div>
+        )}
 
-            {/* Camera Scanner Modal */}
-            {showCameraScanner && (
-              <div className="bg-slate-800 rounded-lg p-4 border border-slate-700 space-y-3">
-                <div className="text-center">
-                  <p className="text-xs text-gray-300 mb-3">Câmera para leitura de código de barras</p>
-                  {!cameraActive ? (
-                    <button
-                      onClick={startCamera}
-                      className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded"
-                    >
-                      Iniciar Câmera
-                    </button>
-                  ) : (
-                    <>
-                      <video
-                        ref={videoRef}
-                        autoPlay
-                        playsInline
-                        className="w-full rounded mb-3 bg-black"
-                        style={{ maxHeight: '200px' }}
-                      />
-                      <canvas ref={canvasRef} className="hidden" width={640} height={480} />
-                      
-                      <div className="flex gap-2">
-                        <button
-                          onClick={captureAndScan}
-                          className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-3 rounded text-sm"
-                        >
-                          Capturar
-                        </button>
-                        <button
-                          onClick={() => {
-                            stopCamera();
-                            setShowCameraScanner(false);
-                          }}
-                          className="flex-1 bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-3 rounded text-sm"
-                        >
-                          Fechar
-                        </button>
-                      </div>
-                      
-                      <p className="text-xs text-gray-400 mt-2">
-                        💡 Dica: Use o scanner USB (mais rápido) ou digiteManualmente o SKU acima
-                      </p>
-                    </>
-                  )}
-                </div>
+        {activeTab === 'entrada' && (
+          <div className="space-y-4">
+            <h2 className="text-lg font-bold">➕ Entrada de Produtos</h2>
+            <select
+              value={selectedProductId}
+              onChange={(e) => setSelectedProductId(e.target.value)}
+              className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded text-white text-sm"
+            >
+              <option value="">Selecione um produto</option>
+              {products.map(p => (
+                <option key={p.id} value={p.id}>{p.name} ({p.quantity || 0})</option>
+              ))}
+            </select>
+            {selectedProduct && (
+              <div className="bg-slate-800/50 border border-blue-600/30 rounded p-3 text-sm">
+                <p><strong>Código:</strong> {selectedProduct.barcode}</p>
+                <p><strong>Estoque:</strong> {selectedProduct.quantity || 0}</p>
               </div>
             )}
-
-            {/* Quick Stats */}
-            <div className="bg-slate-800 rounded-lg p-4 border border-slate-700">
-              <h3 className="text-sm font-semibold text-white mb-3">Últimos Produtos</h3>
-              <div className="space-y-2 max-h-48 overflow-y-auto">
-                {products.slice(0, 5).map((p) => (
-                  <div key={p.id} className="flex justify-between items-center p-2 bg-slate-700/50 rounded text-sm">
-                    <span className="text-white">{p.name}</span>
-                    <span className={`font-semibold ${(p.quantity ?? 0) < 5 ? 'text-red-400' : (p.quantity ?? 0) < 10 ? 'text-yellow-400' : 'text-green-400'}`}>
-                      {p.quantity ?? 0}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
+            <input type="number" placeholder="Preço unitário" value={priceInput} onChange={(e) => setPriceInput(e.target.value)} className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded text-white text-sm" />
+            <input type="number" min="1" value={quantity} onChange={(e) => setQuantity(parseInt(e.target.value) || 1)} className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded text-white text-sm" placeholder="Quantidade" />
+            <input type="text" placeholder="Notas (opcional)" value={notes} onChange={(e) => setNotes(e.target.value)} className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded text-white text-sm" />
+            <button onClick={handleEntrada} disabled={loading || !selectedProductId} className="w-full bg-green-600 hover:bg-green-700 disabled:opacity-50 py-2 rounded font-semibold text-sm">{loading ? 'Salvando...' : '✅ Confirmar Entrada'}</button>
           </div>
         )}
 
-        {/* Vender Tab */}
-        {activeTab === 'vender' && (
-          <div className="p-4 space-y-4">
-            <h2 className="text-xl font-bold text-white">Saída de Estoque</h2>
-            
-            <div className="bg-slate-800 rounded-lg p-4 border border-slate-700 space-y-3">
-              <div>
-                <label className="block text-xs font-semibold text-gray-300 mb-2">Produto</label>
-                <select
-                  value={selectedProduct}
-                  onChange={(e) => setSelectedProduct(e.target.value)}
-                  className="w-full bg-slate-700 border border-slate-600 rounded px-3 py-2 text-white text-sm focus:outline-none"
-                >
-                  <option value="">Selecione...</option>
-                  {products.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.name} ({p.quantity ?? 0})
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="grid grid-cols-2 gap-2">
-                <button
-                  onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                  className="bg-red-600 hover:bg-red-700 text-white py-2 px-3 rounded text-sm font-semibold flex items-center justify-center"
-                >
-                  <Minus size={16} /> Menos
-                </button>
-                <button
-                  onClick={() => setQuantity(quantity + 1)}
-                  className="bg-green-600 hover:bg-green-700 text-white py-2 px-3 rounded text-sm font-semibold flex items-center justify-center"
-                >
-                  <Plus size={16} /> Mais
-                </button>
-              </div>
-
-              <div className="text-center py-3 bg-slate-700 rounded">
-                <p className="text-xs text-gray-400">Quantidade</p>
-                <p className="text-3xl font-bold text-white">{quantity}</p>
-              </div>
-
-              <textarea
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                placeholder="Motivo (opcional)"
-                className="w-full bg-slate-700 border border-slate-600 rounded px-3 py-2 text-white text-sm focus:outline-none resize-none"
-                rows={2}
-              />
-
-              <button
-                onClick={handleRemoveStock}
-                disabled={!selectedProduct}
-                className="w-full bg-red-600 hover:bg-red-700 disabled:bg-gray-600 text-white font-semibold py-3 px-4 rounded"
-              >
-                <Minus className="inline mr-2" size={18} />
-                Confirmar Saída
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Comprar Tab */}
-        {activeTab === 'comprar' && (
-          <div className="p-4 space-y-4">
-            <h2 className="text-xl font-bold text-white">Entrada de Estoque</h2>
-            
-            <div className="bg-slate-800 rounded-lg p-4 border border-slate-700 space-y-3">
-              <div>
-                <label className="block text-xs font-semibold text-gray-300 mb-2">Produto</label>
-                <select
-                  value={selectedProduct}
-                  onChange={(e) => setSelectedProduct(e.target.value)}
-                  className="w-full bg-slate-700 border border-slate-600 rounded px-3 py-2 text-white text-sm focus:outline-none"
-                >
-                  <option value="">Selecione...</option>
-                  {products.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="grid grid-cols-2 gap-2">
-                <button
-                  onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                  className="bg-red-600 hover:bg-red-700 text-white py-2 px-3 rounded text-sm font-semibold flex items-center justify-center"
-                >
-                  <Minus size={16} /> Menos
-                </button>
-                <button
-                  onClick={() => setQuantity(quantity + 1)}
-                  className="bg-green-600 hover:bg-green-700 text-white py-2 px-3 rounded text-sm font-semibold flex items-center justify-center"
-                >
-                  <Plus size={16} /> Mais
-                </button>
-              </div>
-
-              <div className="text-center py-3 bg-slate-700 rounded">
-                <p className="text-xs text-gray-400">Quantidade</p>
-                <p className="text-3xl font-bold text-white">{quantity}</p>
-              </div>
-
-              <textarea
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                placeholder="Fornecedor, NF... (opcional)"
-                className="w-full bg-slate-700 border border-slate-600 rounded px-3 py-2 text-white text-sm focus:outline-none resize-none"
-                rows={2}
-              />
-
-              <button
-                onClick={handleAddStock}
-                disabled={!selectedProduct}
-                className="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-600 text-white font-semibold py-3 px-4 rounded"
-              >
-                <Plus className="inline mr-2" size={18} />
-                Confirmar Entrada
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Estoque Tab */}
-        {activeTab === 'estoque' && (
-          <div className="p-4">
-            <h2 className="text-xl font-bold text-white mb-4">Saldo de Estoque</h2>
-            
-            <div className="space-y-2 max-h-96 overflow-y-auto">
-              {products.map((p) => (
-                <div key={p.id} className="bg-slate-800 rounded-lg p-3 border border-slate-700">
-                  <div className="flex justify-between items-start mb-2">
-                    <h3 className="text-sm font-semibold text-white flex-1">{p.name}</h3>
-                    <span className={`text-lg font-bold ${(p.quantity ?? 0) < 5 ? 'text-red-400' : (p.quantity ?? 0) < 10 ? 'text-yellow-400' : 'text-green-400'}`}>
-                      {p.quantity ?? 0}
-                    </span>
-                  </div>
-                  {p.sku && <p className="text-xs text-gray-400">SKU: {p.sku}</p>}
-                  <div className="mt-2 w-full bg-slate-700 rounded-full h-2">
-                    <div
-                      className={`h-2 rounded-full transition-all ${
-                        (p.quantity ?? 0) < 5 ? 'bg-red-500' : (p.quantity ?? 0) < 10 ? 'bg-yellow-500' : 'bg-green-500'
-                      }`}
-                      style={{ width: `${Math.min(((p.quantity ?? 0) / 50) * 100, 100)}%` }}
-                    ></div>
-                  </div>
-                </div>
+        {activeTab === 'saida' && (
+          <div className="space-y-4">
+            <h2 className="text-lg font-bold">🛒 Saída de Produtos</h2>
+            <select
+              value={selectedProductId}
+              onChange={(e) => setSelectedProductId(e.target.value)}
+              className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded text-white text-sm"
+            >
+              <option value="">Selecione um produto</option>
+              {products.map(p => (
+                <option key={p.id} value={p.id}>{p.name} ({p.quantity || 0})</option>
               ))}
-            </div>
+            </select>
+            {selectedProduct && (
+              <div className="bg-slate-800/50 border border-orange-600/30 rounded p-3 text-sm">
+                <p><strong>Código:</strong> {selectedProduct.barcode}</p>
+                <p><strong>Preço:</strong> R$ {selectedProduct.price?.toFixed(2) || '0.00'}</p>
+                <p><strong>Disponível:</strong> {selectedProduct.quantity || 0}</p>
+                <p><strong>Total:</strong> R$ {((selectedProduct.price || 0) * quantity).toFixed(2)}</p>
+              </div>
+            )}
+            <input type="number" min="1" max={selectedProduct?.quantity || 1} value={quantity} onChange={(e) => setQuantity(parseInt(e.target.value) || 1)} className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded text-white text-sm" placeholder="Quantidade" />
+            <input type="text" placeholder="Notas (opcional)" value={notes} onChange={(e) => setNotes(e.target.value)} className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded text-white text-sm" />
+            <button onClick={handleSaida} disabled={loading || !selectedProductId} className="w-full bg-orange-600 hover:bg-orange-700 disabled:opacity-50 py-2 rounded font-semibold text-sm">{loading ? 'Salvando...' : '🛒 Confirmar Venda'}</button>
           </div>
         )}
-      </div>
 
-      {/* Bottom Navigation */}
-      <div className="fixed bottom-0 left-0 right-0 bg-slate-800 border-t border-slate-700 flex items-center justify-around p-2">
-        <button
-          onClick={() => setActiveTab('home')}
-          className={`flex flex-col items-center space-y-1 p-3 rounded-lg transition flex-1 ${
-            activeTab === 'home' ? 'text-cyan-400 bg-slate-700' : 'text-gray-400'
-          }`}
-        >
-          <Home size={24} />
-          <span className="text-xs">Início</span>
-        </button>
+        {activeTab === 'estoque' && (
+          <div className="space-y-3">
+            <h2 className="text-lg font-bold mb-4">📦 Consultar Estoque</h2>
+            {products.map(p => (
+              <div key={p.id} className="bg-slate-800/30 border border-slate-700 rounded p-3">
+                <p className="font-semibold text-sm mb-1">{p.name}</p>
+                <div className="grid grid-cols-2 gap-2 text-xs text-gray-300">
+                  <p>📄 {p.barcode}</p>
+                  <p>💰 R$ {p.price?.toFixed(2) || '0.00'}</p>
+                  <p>📦 {p.quantity || 0} un</p>
+                  <p>{(p.quantity || 0) > 10 ? '✅ OK' : (p.quantity || 0) > 0 ? '⚠️ Baixo' : '❌ Fora'}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </main>
 
-        <button
-          onClick={() => setActiveTab('vender')}
-          className={`flex flex-col items-center space-y-1 p-3 rounded-lg transition flex-1 ${
-            activeTab === 'vender' ? 'text-cyan-400 bg-slate-700' : 'text-gray-400'
-          }`}
-        >
-          <ShoppingCart size={24} />
-          <span className="text-xs">Vender</span>
-        </button>
-
-        <button
-          onClick={() => setActiveTab('comprar')}
-          className={`flex flex-col items-center space-y-1 p-3 rounded-lg transition flex-1 ${
-            activeTab === 'comprar' ? 'text-cyan-400 bg-slate-700' : 'text-gray-400'
-          }`}
-        >
-          <Package size={24} />
-          <span className="text-xs">Comprar</span>
-        </button>
-
-        <button
-          onClick={() => setActiveTab('estoque')}
-          className={`flex flex-col items-center space-y-1 p-3 rounded-lg transition flex-1 ${
-            activeTab === 'estoque' ? 'text-cyan-400 bg-slate-700' : 'text-gray-400'
-          }`}
-        >
-          <BarChart3 size={24} />
-          <span className="text-xs">Estoque</span>
-        </button>
-      </div>
+      <nav className="fixed bottom-0 left-0 right-0 bg-gradient-to-t from-slate-900 to-slate-800 border-t border-blue-700/30 grid grid-cols-4">
+        <button onClick={() => setActiveTab('home')} className={`py-3 text-center text-xs font-semibold transition-all ${activeTab === 'home' ? 'text-blue-400 border-t-2 border-blue-400' : 'text-gray-400'}`}>📊 Home</button>
+        <button onClick={() => setActiveTab('entrada')} className={`py-3 text-center text-xs font-semibold transition-all ${activeTab === 'entrada' ? 'text-green-400 border-t-2 border-green-400' : 'text-gray-400'}`}>➕ Entrada</button>
+        <button onClick={() => setActiveTab('saida')} className={`py-3 text-center text-xs font-semibold transition-all ${activeTab === 'saida' ? 'text-orange-400 border-t-2 border-orange-400' : 'text-gray-400'}`}>🛒 Saída</button>
+        <button onClick={() => setActiveTab('estoque')} className={`py-3 text-center text-xs font-semibold transition-all ${activeTab === 'estoque' ? 'text-cyan-400 border-t-2 border-cyan-400' : 'text-gray-400'}`}>📦 Estoque</button>
+      </nav>
     </div>
   );
 }
