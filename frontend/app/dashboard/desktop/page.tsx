@@ -12,6 +12,7 @@ import {
   Package,
 } from 'lucide-react';
 import { EntradaForm } from '../entrada-form';
+import { SaidaForm } from '../saida-form';
 import { productsApi, type Product } from '@/lib/supabase';
 
 export default function DesktopDashboard() {
@@ -181,10 +182,7 @@ export default function DesktopDashboard() {
           {/* Saída Tab */}
           {activeTab === 'saida' && (
             <div>
-              <h1 className="text-3xl font-bold text-white mb-8">Saída de Estoque</h1>
-              <div className="bg-slate-800 rounded-lg p-8 border border-slate-700">
-                <p className="text-gray-400">Saída em desenvolvimento - será conectada ao banco de dados</p>
-              </div>
+              <SaidaForm />
             </div>
           )}
 
