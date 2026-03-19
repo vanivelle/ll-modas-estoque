@@ -1,8 +1,8 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { Camera, X } from 'lucide-react';
-import Quagga from '@ericblade/quagga2';
+import dynamic from 'next/dynamic';
 
 interface BarcodeScannerProps {
   onDetected: (barcode: string) => void;
@@ -14,12 +14,17 @@ export function BarcodeScanner({ onDetected, isOpen, onClose }: BarcodeScannerPr
   const videoRef = useRef<HTMLDivElement>(null);
   const [isScanning, setIsScanning] = useState(false);
   const [lastCode, setLastCode] = useState('');
+  const quaggaRef = useRef<any>(null);
 
   useEffect(() => {
     if (!isOpen) return;
 
     const startScanning = async () => {
       try {
+        // Dinamic import para evitar SSR issues
+        const Quagga = (await import('@ericblade/quagga2')).default;
+        quaggaRef.current = Quagga;
+        
         console.log('🔴 Iniciando Quagga...');
         
         await Quagga.init(
@@ -31,33 +36,30 @@ export function BarcodeScanner({ onDetected, isOpen, onClose }: BarcodeScannerPr
                 height: { min: 480 },
                 facingMode: 'environment',
               },
-              target: videoRef.current,
+              target: videoRef.current as any,
             },
             decoder: {
               readers: ['ean_reader', 'ean_8_reader', 'code_128_reader'],
               debug: {
                 showPattern: true,
-                showCanvas: true,
-                showLog: true,
               },
             },
             locate: true,
             frequency: 10,
-            multiple: false,
           },
-          (err) => {
+          (err: any) => {
             if (err) {
               console.error('❌ Erro ao inicializar Quagga:', err);
               alert('❌ Erro ao acessar câmera. Verifique permissões.');
               return;
             }
             console.log('✅ Quagga inicializado');
-            Quagga.start();
+            quaggaRef.current.start();
             setIsScanning(true);
           }
         );
 
-        Quagga.onDetected((result) => {
+        quaggaRef.current.onDetected((result: any) => {
           if (result && result.codeResult) {
             const code = result.codeResult.code;
             console.log('📊 Código detectado:', code);
@@ -68,7 +70,7 @@ export function BarcodeScanner({ onDetected, isOpen, onClose }: BarcodeScannerPr
               onDetected(code);
               
               // Parar scanner após detectar
-              Quagga.stop();
+              quaggaRef.current.stop();
               setIsScanning(false);
               console.log('✅ Scanner parado após detecção');
             }
@@ -83,9 +85,9 @@ export function BarcodeScanner({ onDetected, isOpen, onClose }: BarcodeScannerPr
     startScanning();
 
     return () => {
-      if (isScanning) {
+      if (isScanning && quaggaRef.current) {
         try {
-          Quagga.stop();
+          quaggaRef.current.stop();
           console.log('🛑 Quagga parado');
         } catch (e) {
           console.error('Erro ao parar Quagga:', e);
