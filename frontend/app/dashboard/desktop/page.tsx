@@ -13,6 +13,8 @@ import {
 } from 'lucide-react';
 import { EntradaForm } from '../entrada-form';
 import { SaidaForm } from '../saida-form';
+import { EstoqueConsulta } from '../estoque-consulta';
+import { Relatorios } from '../relatorios';
 import { productsApi, type Product } from '@/lib/supabase';
 
 export default function DesktopDashboard() {
@@ -189,20 +191,14 @@ export default function DesktopDashboard() {
           {/* Estoque Tab */}
           {activeTab === 'estoque' && (
             <div>
-              <h1 className="text-3xl font-bold text-white mb-8">Consulta de Estoque</h1>
-              <div className="bg-slate-800 rounded-lg p-8 border border-slate-700">
-                <p className="text-gray-400">Estoque em desenvolvimento - será conectada ao banco de dados</p>
-              </div>
+              <EstoqueConsulta />
             </div>
           )}
 
           {/* Relatórios Tab */}
           {activeTab === 'relatorios' && (
             <div>
-              <h1 className="text-3xl font-bold text-white mb-8">Relatórios</h1>
-              <div className="bg-slate-800 rounded-lg p-8 border border-slate-700">
-                <p className="text-gray-400">Relatórios em desenvolvimento...</p>
-              </div>
+              <Relatorios />
             </div>
           )}
         </div>
