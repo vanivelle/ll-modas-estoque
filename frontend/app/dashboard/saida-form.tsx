@@ -31,7 +31,7 @@ const PRODUTOS = [
 
 export function SaidaForm() {
   console.log('🛒 SAIDA-FORM LOADED');
-  const [barcode, setBarcode] = useState('');
+  const [selectedProductId, setSelectedProductId] = useState('');
   const [quantidade, setQuantidade] = useState('');
   const [loading, setLoading] = useState(false);
   const [isScannerOpen, setIsScannerOpen] = useState(false);
@@ -40,45 +40,51 @@ export function SaidaForm() {
   const [ultimaVenda, setUltimaVenda] = useState<Sale | null>(null);
   const [isComprovanteOpen, setIsComprovanteOpen] = useState(false);
 
-  const handleBarcodeDetected = async (detectedCode: string) => {
-    console.log('📱 Código detectado:', detectedCode);
-    setBarcode(detectedCode);
-    setIsScannerOpen(false);
-    await buscarProduto(detectedCode);
-  };
-
-  const handleBarcodeInput = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const code = e.target.value.trim();
-    setBarcode(code);
+  const handleProductSelect = async (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const prodId = e.target.value;
+    setSelectedProductId(prodId);
     setErro('');
-    setProdutoCarregado(null);
     setQuantidade('');
 
-    // Auto-buscar quando código tem tamanho padrão
-    if (code.length >= 8) {
-      await buscarProduto(code);
+    if (!prodId) {
+      setProdutoCarregado(null);
+      return;
     }
-  };
 
-  const buscarProduto = async (code: string) => {
+    // Buscar produto do Supabase
     try {
       setLoading(true);
-      const produto = await saidaApi.findByBarcode(code);
+      const produto = await saidaApi.findByBarcode(
+        PRODUTOS.find(p => p.id === prodId)?.barcode || ''
+      );
       
       if (produto) {
-        console.log('✅ Produto encontrado:', produto.name);
+        console.log('✅ Produto carregado:', produto.name);
         setProdutoCarregado(produto);
-        setErro('');
       } else {
-        console.warn('❌ Produto não encontrado');
-        setErro(`❌ Produto com código ${code} não encontrado!`);
+        setErro('❌ Erro ao carregar dados do estoque');
         setProdutoCarregado(null);
       }
     } catch (error) {
       console.error('Erro ao buscar:', error);
-      setErro('⚠️ Erro ao conectar com banco de dados');
+      setErro('⚠️ Erro ao conectar');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleBarcodeDetected = async (detectedCode: string) => {
+    console.log('📱 Código detectado:', detectedCode);
+    setIsScannerOpen(false);
+
+    const found = PRODUTOS.find(p => p.barcode === detectedCode);
+    if (found) {
+      setSelectedProductId(found.id);
+      await handleProductSelect({
+        target: { value: found.id },
+      } as any);
+    } else {
+      setErro(`❌ Produto com código ${detectedCode} não encontrado!`);
     }
   };
 
@@ -114,7 +120,7 @@ export function SaidaForm() {
         alert(`✅ ${venda.product_name} x ${qtd} un vendido!`);
         
         // Limpar campos
-        setBarcode('');
+        setSelectedProductId('');
         setQuantidade('');
         setProdutoCarregado(null);
         setErro('');
@@ -151,31 +157,36 @@ export function SaidaForm() {
           🛒 SAÍDA ESTOQUE - VENDAS
         </h2>
 
-        {/* Buscar Produto */}
+        {/* Selecionar Produto */}
         <div className="mb-6">
           <div className="flex items-center justify-between mb-3">
-            <label htmlFor="inp-barcode-saida" className="block text-sm font-semibold text-orange-300">
-              Código de Barras (Scanner ou Cole/Digite)
+            <label htmlFor="sel-saida-produto" className="block text-sm font-semibold text-orange-300">
+              Produto ({PRODUTOS.length} disponíveis)
             </label>
             <button
               onClick={() => setIsScannerOpen(true)}
               className="flex items-center gap-2 bg-cyan-600/20 hover:bg-cyan-600/40 border border-cyan-500/50 text-cyan-300 px-3 py-1 rounded-lg text-sm font-semibold transition"
             >
               <Camera size={16} />
-              Escanear
+              Ou Escanear
             </button>
           </div>
-          <input
-            id="inp-barcode-saida"
-            type="text"
-            value={barcode}
-            onChange={handleBarcodeInput}
-            placeholder="📱 Cole/digite código"
-            className="w-full bg-slate-900/50 border border-orange-500/30 rounded-lg py-3 px-4 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500/50"
+          <select
+            id="sel-saida-produto"
+            value={selectedProductId}
+            onChange={handleProductSelect}
             disabled={loading}
-          />
-          {barcode && !produtoCarregado && !erro && (
-            <p className="text-xs text-yellow-400 mt-2">🔍 Buscando...</p>
+            className="w-full bg-slate-900/50 border border-orange-500/30 rounded-lg py-3 px-4 text-white focus:outline-none focus:ring-2 focus:ring-orange-500/50"
+          >
+            <option value="">Selecione um produto...</option>
+            {PRODUTOS.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.name}
+              </option>
+            ))}
+          </select>
+          {loading && (
+            <p className="text-xs text-yellow-400 mt-2">⏳ Carregando dados do estoque...</p>
           )}
         </div>
 
